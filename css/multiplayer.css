@@ -1,0 +1,86 @@
+        /* =====================================================================
+           MULTIPLAYER (TAMBAHAN BARU) — gaya untuk lobby, room, hasil & strip balapan.
+           Semua kelas diawali "mp-" agar tidak bentrok dengan kode lama, dan sengaja
+           tidak memakai utility Tailwind baru supaya tetap rapi walau CDN Tailwind gagal dimuat.
+           Ukuran font minimum 8px (sama dengan aturan keterbacaan di game ini).
+           ===================================================================== */
+        .mp-screen { justify-content: flex-start; gap: 8px; }
+        .mp-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+        .mp-h2 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 10px; font-weight: bold; color: #fff;
+                 text-align: center; text-shadow: 2px 2px 0 #2c1a0e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mp-h2-dark { margin: 0; font-size: 10px; font-weight: bold; color: #3e2723; text-align: center; line-height: 1.5; }
+        .mp-panel { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .mp-list-panel { flex: 1 1 auto; min-height: 140px; overflow: hidden; }
+        .mp-text { margin: 0; font-size: 8px; line-height: 1.7; color: #3e2723; text-align: center; }
+        .mp-text.left { text-align: left; }
+        .mp-status { font-size: 8px; line-height: 1.5; text-align: center; padding: 5px; color: #3e2723;
+                     background: rgba(255,255,255,.75); border: 2px solid var(--wood-dark); }
+        .mp-status.ok { color: #1b5e20; }
+        .mp-status.bad { color: #b71c1c; }
+        .mp-note { min-height: 12px; font-size: 8px; line-height: 1.5; text-align: center; color: #e65100; }
+        .mp-dot { flex: 0 0 auto; width: 14px; height: 14px; border: 2px solid var(--wood-dark); background: #9e9e9e; }
+        .mp-dot.ok { background: #43a047; }
+        .mp-dot.wait { background: #fbc02d; }
+        .mp-dot.bad { background: #e53935; }
+        .mp-btn-xs { flex: 0 0 auto; font-size: 8px; padding: 5px 7px; }
+        .mp-btn-sm { flex: 0 0 auto; font-size: 8px; padding: 6px 8px; }
+        .mp-btn-md { flex: 1 1 0; min-width: 0; font-size: 8px; padding: 9px 6px; }
+        .mp-btn-lg { width: 100%; font-size: 9px; padding: 12px 8px; }
+        .mp-btnrow { display: flex; gap: 6px; width: 100%; }
+        .mp-codebox { display: flex; gap: 6px; align-items: stretch; }
+        .mp-codebox .mp-code-input { flex: 1 1 auto; width: auto; min-width: 0; padding: 8px; font-size: 10px;
+                                     letter-spacing: 2px; text-transform: uppercase; }
+        .mp-list-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 8px; font-weight: bold;
+                        color: #3e2723; border-bottom: 2px solid #3e2723; padding-bottom: 5px; }
+        .mp-list { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+        .mp-empty { padding: 12px 4px; font-size: 8px; line-height: 1.7; text-align: center; color: #5d4037; }
+        .mp-room-row, .mp-seat, .mp-res-row { display: flex; align-items: center; gap: 6px; padding: 6px; font-size: 8px;
+                                              color: #3e2723; background: rgba(255,255,255,.92); border: 2px solid #3e2723; }
+        .mp-seat.empty { background: rgba(255,255,255,.5); color: #6d4c41; border-style: dashed; }
+        .mp-seat.me, .mp-res-row.me { background: #fff8d6; border-color: #8d6e00; }
+        .mp-room-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .mp-room-name { font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mp-room-sub { font-size: 8px; line-height: 1.6; color: #6d4c41; white-space: normal; overflow-wrap: anywhere; }
+        .mp-badge { flex: 0 0 auto; padding: 2px 4px; font-size: 8px; color: #fff; background: #2e7d32; border: 1px solid #1b5e20; }
+        .mp-badge.busy { background: #c62828; border-color: #7f0000; }
+        .mp-badge.host { background: #f9a825; color: #3e2723; border-color: #8d6e00; }
+        .mp-avatar { flex: 0 0 auto; font-size: 16px; line-height: 1; }
+        .mp-seat-name, .mp-res-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold; }
+        .mp-codeline { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 8px; color: #3e2723; flex-wrap: wrap; }
+        .mp-codeline b { font-size: 12px; letter-spacing: 3px; color: #b71c1c; }
+        .mp-seats { display: flex; flex-direction: column; gap: 5px; }
+        .mp-res-rank { flex: 0 0 auto; width: 22px; font-weight: bold; font-size: 10px; text-align: center; }
+        .mp-res-score { flex: 0 0 auto; font-weight: bold; }
+        .mp-res-status { flex: 0 0 auto; font-size: 8px; color: #6d4c41; }
+        .mp-reward { font-size: 8px; line-height: 1.7; text-align: center; font-weight: bold; color: #1b5e20; min-height: 12px; }
+        .mp-modal { width: 100%; max-width: 320px; padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+        .mp-modal h3 { margin: 0; font-size: 10px; color: #3e2723; }
+        .mp-countdown { position: absolute; inset: 0; z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center;
+                        gap: 10px; background: rgba(0,18,32,.88); }
+        .mp-countdown.active { display: flex; }
+        #mp-countdown-num { font-size: 56px; color: var(--pixel-gold); text-shadow: 4px 4px 0 #2c1a0e; line-height: 1.1; }
+        .mp-countdown-sub { font-size: 9px; color: #fff; text-align: center; line-height: 1.7; }
+        /* Strip peringkat langsung di layar balapan (disisipkan lewat JS hanya saat mode multiplayer) */
+        #mp-race-strip { display: none; gap: 2px; margin: 0 0 4px; }
+        .mp-strip-cell { flex: 1 1 0; min-width: 0; padding: 3px 4px; font-size: 8px; color: #fff; background: rgba(0,0,0,.6);
+                         border: 1px solid rgba(255,255,255,.3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mp-strip-cell.me { color: var(--pixel-gold); border-color: var(--pixel-gold); }
+        /* ---- CHAT ROOM (TAMBAHAN BARU): mengisi ruang kosong di bawah panel ruang tunggu ---- */
+        .mp-chat { flex: 1 1 0; min-height: 170px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .mp-chat-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 8px; font-weight: bold;
+                        color: #3e2723; border-bottom: 2px solid #3e2723; padding-bottom: 5px; }
+        .mp-chat-log { flex: 1 1 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding: 6px;
+                       background: rgba(255,255,255,.55); border: 2px solid #3e2723; }
+        .mp-chat-empty { margin: auto; padding: 8px; font-size: 8px; line-height: 1.8; text-align: center; color: #6d4c41; }
+        .mp-chat-msg { align-self: flex-start; max-width: 88%; padding: 5px 6px; font-size: 8px; line-height: 1.6; color: #3e2723;
+                       background: #fff; border: 2px solid #3e2723; overflow-wrap: anywhere; }
+        .mp-chat-msg.mine { align-self: flex-end; background: #fff8d6; border-color: #8d6e00; }
+        .mp-chat-who { display: block; margin-bottom: 2px; font-weight: bold; color: #6d4c41; }
+        .mp-chat-msg.mine .mp-chat-who { color: #8d6e00; }
+        .mp-chat-text { display: block; }
+        .mp-chat-form { display: flex; gap: 6px; align-items: stretch; }
+        .mp-chat-form .mp-chat-input { flex: 1 1 auto; width: auto; min-width: 0; padding: 8px; font-size: 9px; text-align: left; }
+        /* ---- KELUARKAN PEMAIN (TAMBAHAN BARU): tombol host di daftar pemain ---- */
+        .mp-kick-btn { background-color: #ffcdd2; color: #b71c1c; border-color: #7f0000; }
+        .mp-kick-btn:hover { background-color: #ef9a9a; }
+    
