@@ -1,0 +1,31 @@
+name: apply-to-main
+
+on:
+  push:
+    branches: [ci/apply-to-main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Pastikan index.html di main masih versi awal
+        run: test "$(git hash-object index.html)" = "8e34f41c4898bf70e3947dd9be8a40df85a46e4e"
+      - name: Salin index.html dari fix/bug-1-4 dan verifikasi
+        run: |
+          git fetch origin fix/bug-1-4
+          git checkout origin/fix/bug-1-4 -- index.html
+          test "$(git hash-object index.html)" = "fd3d02e4f58ebbbd084f9f0c375bf910bf6e514f"
+      - name: Commit ke main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Perbaikan bug #1 (pemulihan setelah background) dan #4 (pesan MQTT bertanda tangan)"
+          git push origin HEAD:main
