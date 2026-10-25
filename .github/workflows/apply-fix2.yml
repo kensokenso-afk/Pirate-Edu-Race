@@ -1,0 +1,31 @@
+name: apply-fix-5-6-7
+
+on:
+  push:
+    branches: [ci/apply-to-main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ci
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: repo
+      - name: Terapkan patch (menolak bila versi awal atau hasil akhir tidak sesuai)
+        working-directory: repo
+        run: python3 ../ci/.github/apply/apply_fix2.py
+      - name: Commit ke main
+        working-directory: repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Perbaikan bug #5 (reset data), #6 (antrean skor leaderboard), #7 (pesan leave saat tab ditutup)"
+          git push origin HEAD:main
