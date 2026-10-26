@@ -1,0 +1,38 @@
+/* css/pixel.css — gaya upgrade grafis pixel (milik Claude). Dimuat setelah style.css dan multiplayer.css. */
+        /* LATAR LAUT PIXEL ART (semua layar) — digambar di <canvas id="scene-canvas"> yang berada di belakang
+           semua layar. Layar dibuat transparan; kaidah tanpa @layer ini mengalahkan .screen dan .ocean-pattern.
+           Gradient pada #game-container hanya cadangan bila canvas/JS gagal. */
+        #game-container { background: linear-gradient(180deg, #69dbe8 0%, #33acd5 55%, #1b73ae 100%); }
+        #game-container > .screen { background: none; animation: none; }
+        #scene-wrap { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+        #scene-canvas { position: absolute; left: 0; top: 0; image-rendering: pixelated; }
+        /* teks langsung di atas laut diberi bayangan tipis agar tetap terbaca */
+        #game-container > .screen .text-white, #game-container > .screen .text-yellow-300,
+        #game-container > .screen .text-yellow-200 { text-shadow: 1px 1px 0 #0b3d66, 0 0 4px rgba(11,61,102,.7); }
+        #screen-main-menu h1 { text-shadow: 2px 2px 0 #2c1a0e, 0 0 6px rgba(44,26,14,.45); }
+        #screen-main-menu h1 + p { text-shadow: 1px 1px 0 #2c1a0e, 0 0 4px rgba(44,26,14,.6); }
+        /* ARENA BALAPAN pixel art (tampak atas). Kapal emoji lama disembunyikan tetapi tetap ada di DOM
+           (posisi & animasinya dibaca oleh skrip arena), sehingga logika game tidak berubah. */
+        #race-track { background: #2b9fd2; animation: none; background-image: none; }
+        #race-canvas { position: absolute; left: 0; top: 0; image-rendering: pixelated; pointer-events: none; }
+        #ship-player, #ship-bot1, #ship-bot2, #ship-bot3 { visibility: hidden; }
+        #race-track .rounded { z-index: 3; }
+        /* AVATAR & ITEM PIXEL ART: sprite diskalakan bulat (avatar 20x24, ikon item 20x20) */
+        .pxav { display: block; margin: 0 auto; width: var(--pxs, 20px); height: auto; aspect-ratio: 20 / 24; image-rendering: pixelated; }
+        #display-avatar, #profile-avatar { --pxs: 40px; display: flex; flex-direction: column; align-items: center; }
+        #modal-avatar .text-2xl { --pxs: 60px; display: block; }
+        .mp-avatar { --pxs: 20px; display: inline-flex; align-items: center; justify-content: center; }
+        .pxit { display: block; margin: 0 auto; width: 60px; height: 60px; image-rendering: pixelated; }
+        .pxit.sm { width: 40px; height: 40px; }
+        /* ikon emoji item di bawah avatar disembunyikan: item kini digambar langsung pada karakter */
+        .px-items #display-avatar > div, .px-items #profile-avatar > div { display: none; }
+        #sw-preview { display: flex; align-items: center; gap: 8px; padding: 4px 6px; margin-bottom: 6px; background: rgba(255,248,214,.9);
+            border: 2px solid #3e2723; font-size: 7px; line-height: 1.35; font-weight: bold; color: #3e2723; }
+        #sw-preview #sw-pav, #sw-preview #sw-pship { flex: 0 0 auto; }
+        #sw-preview #sw-pav .pxav { --pxs: 40px; }
+        #sw-preview #sw-ptxt { flex: 1 1 auto; min-width: 0; }
+        .fx-desc { display: block; font-size: 6px; line-height: 1.4; color: #1b5e20; font-weight: bold; margin-top: 2px; }
+        #fx-toast { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 60; max-width: 86%; text-align: center;
+            background: #fff8d6; border: 3px solid #3e2723; padding: 6px 10px; font-size: 8px; font-weight: bold; color: #3e2723;
+            pointer-events: none; opacity: 0; transition: opacity .25s; }
+        #fx-toast.show { opacity: 1; }
