@@ -812,7 +812,8 @@ try {
         { re: /🤖/, key: 'bot',     alt: 'Bot' }
     ];
     var ANY = new RegExp(MAP.map(function (m) { return m.re.source; }).join('|'), 'g');
-    var AV_SEL = '#display-avatar, #profile-avatar, .mp-avatar, #modal-avatar .text-2xl';
+    var AV_SEL = '#display-avatar, #profile-avatar, .mp-avatar, #modal-avatar .text-2xl, .mp-chat-who';
+    var HEAD_ROWS = 14;                       // baris 0-13 sprite = kepala saja (tanpa badan dan kaki); dipakai di nama pengirim chat room
     var DRESSED = '#display-avatar, #profile-avatar';
     var ITEM_SEL = '#shop-items-grid .text-2xl, #collection-grid .text-2xl';
     var ALL_SEL = AV_SEL + ', ' + ITEM_SEL;
@@ -859,6 +860,23 @@ try {
         return toURL(ck, g.map(function (r) { return r.join(''); }));
     }
 
+    // Kepala saja: topi dan kacamata yang dipakai ikut tergambar; baju, sepatu, pet, dan kompas berada di bawah baris 13
+    function headURL(key, ids) {
+        var use = ids.filter(function (id) { return /^(hat|acc)-/.test(id); });
+        var ck = 'head|' + key + '|' + use.join(',');
+        if (urls[ck]) return urls[ck];
+        var g = AVS[key].map(function (r) { return r.split(''); });
+        use.forEach(function (id) {
+            var lg = LAYERS[id];
+            for (var y = 0; y < HEAD_ROWS && y < lg.length; y++) for (var x = 0; x < W; x++) {
+                var ch = lg[y].charAt(x);
+                if (ch === '.') continue;
+                g[y][x] = ch === '_' ? '.' : ch;
+            }
+        });
+        return toURL(ck, g.slice(0, HEAD_ROWS).map(function (r) { return r.join(''); }));
+    }
+
     function lookup(str) {
         for (var i = 0; i < MAP.length; i++) if (MAP[i].re.test(str)) return MAP[i];
         return null;
@@ -872,7 +890,9 @@ try {
     }
 
     function convertAvatar(el) {
-        var dress = el.matches(DRESSED), ids = dress ? equippedIds() : [];
+        var head = el.matches('.mp-chat-who');                           // nama pengirim chat room -> kepala karakter saja
+        var mine = head && !!el.closest('.mp-chat-msg.mine');            // pesan sendiri memakai topi/kacamata yang sedang dipakai
+        var dress = el.matches(DRESSED) || mine, ids = dress ? equippedIds() : [];
         var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null), nodes = [], n;
         while ((n = walker.nextNode())) { ANY.lastIndex = 0; if (ANY.test(n.nodeValue)) nodes.push(n); }
         nodes.forEach(function (t) {
@@ -881,7 +901,8 @@ try {
             while ((m = ANY.exec(s))) {
                 var def = lookup(m[0]); if (!def || !AVS[def.key]) continue;
                 if (m.index > last) frag.appendChild(document.createTextNode(s.slice(last, m.index)));
-                frag.appendChild(mkImg(dressedURL(def.key, ids), 'pxav', m[0], def.alt, 24));
+                frag.appendChild(head ? mkImg(headURL(def.key, ids), 'pxav pxhead', m[0], def.alt, HEAD_ROWS)
+                                      : mkImg(dressedURL(def.key, ids), 'pxav', m[0], def.alt, 24));
                 last = m.index + m[0].length;
             }
             if (last === 0) return;
