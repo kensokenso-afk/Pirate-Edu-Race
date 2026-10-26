@@ -1,0 +1,2 @@
+/* css/pixel-icons.css — gaya ikon pixel kecil pengganti emoji dekorasi (lihat js/pixel-icons.js). */
+.pxi { display: inline-block; vertical-align: -0.2em; image-rendering: pixelated; margin: 0 1px; max-width: none; }
