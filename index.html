@@ -14,10 +14,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/multiplayer.css" id="mp-style">
+    <link rel="stylesheet" href="css/pixel.css">
 </head>
 <body>
 
 <div id="game-container">
+    <div id="scene-wrap" aria-hidden="true"><canvas id="scene-canvas"></canvas></div>
 
     <!-- 1. LOADING SCREEN -->
     <div id="screen-loading" class="screen active justify-center items-center text-center ocean-pattern">
@@ -494,5 +496,9 @@
 
 <script src="js/game.js"></script>
 <script src="js/multiplayer.js" id="mp-script"></script>
+<script src="js/pixel-scene.js"></script>
+<script src="js/pixel-race.js"></script>
+<script src="js/pixel-avatar.js"></script>
+<script src="js/pixel-fx.js"></script>
 </body>
 </html>
