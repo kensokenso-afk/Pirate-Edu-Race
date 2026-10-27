@@ -1,0 +1,141 @@
+/* css/pixel-ui.css — rapikan UI/UX empat layar bergaya pixel art: menu utama, peta laut, lobi multiplayer, dan room.
+   Milik Claude. Dimuat setelah pixel.css. Hanya CSS: logika game dan css/style.css, css/multiplayer.css tidak diubah.
+   Prinsip: target sentuh >= 40-44px, teks tidak di bawah 8px, bayangan keras (tanpa blur) agar tetap pixel art,
+   dan ukuran ikon selalu kelipatan bulat dari sprite (12px -> 24px / 36px / 48px) supaya tajam. */
+
+:root { --px-ink: #2c1a0e; --px-wood: #3e2723; --px-cream: #fff3c4; --px-gold: #ffd54f; }
+
+/* ============ TOMBOL (empat layar) ============ */
+#screen-main-menu .pixel-btn, #screen-adventure .pixel-btn, #screen-mp-lobby .pixel-btn, #screen-mp-room .pixel-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; line-height: 1.35;
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,.4), inset 3px 3px 0 rgba(255,255,255,.9), 0 4px 0 var(--px-ink);
+}
+#screen-main-menu .pixel-btn-action, #screen-adventure .pixel-btn-action, #screen-mp-lobby .pixel-btn-action, #screen-mp-room .pixel-btn-action {
+    box-shadow: inset -3px -3px 0 #e65100, inset 3px 3px 0 #ffe082, 0 4px 0 #5a1010;
+}
+#screen-main-menu .pixel-btn:active, #screen-adventure .pixel-btn:active, #screen-mp-lobby .pixel-btn:active, #screen-mp-room .pixel-btn:active {
+    transform: translateY(3px); box-shadow: inset 3px 3px 0 rgba(0,0,0,.4), 0 1px 0 var(--px-ink);
+}
+#screen-main-menu .pixel-btn:disabled, #screen-adventure .pixel-btn:disabled, #screen-mp-lobby .pixel-btn:disabled, #screen-mp-room .pixel-btn:disabled {
+    opacity: 1; background: #cdbf9f; border-color: #6b5a45; color: #7a6a52; text-shadow: none; transform: none;
+    box-shadow: inset -3px -3px 0 #a99a7a, inset 3px 3px 0 #e6dbc0, 0 4px 0 #3a2c1c;
+}
+#screen-main-menu .pixel-btn .pxi, #screen-adventure .pixel-btn .pxi, #screen-mp-lobby .pixel-btn .pxi, #screen-mp-room .pixel-btn .pxi {
+    width: 24px; height: 24px; margin: 0; vertical-align: middle; flex: 0 0 auto;
+}
+#screen-mp-lobby .mp-btn-xs, #screen-mp-room .mp-btn-xs { min-height: 36px; }
+#screen-mp-lobby .mp-btn-xs .pxi, #screen-mp-room .mp-btn-xs .pxi { width: 12px; height: 12px; }
+/* layar sentuh: hover tidak boleh "menempel" setelah ditekan */
+@media (hover: none) {
+    #screen-main-menu .pixel-btn:hover, #screen-adventure .pixel-btn:hover, #screen-mp-lobby .pixel-btn:hover, #screen-mp-room .pixel-btn:hover { transform: none; }
+    #screen-main-menu .pixel-btn:active, #screen-adventure .pixel-btn:active, #screen-mp-lobby .pixel-btn:active, #screen-mp-room .pixel-btn:active { transform: translateY(3px); }
+}
+
+/* ============ 1. MENU UTAMA ============ */
+#screen-main-menu > div:first-child .pixel-box-parchment { font-size: 11px; padding: 6px 10px; gap: 6px; min-height: 40px; }
+#screen-main-menu > div:first-child .pixel-box-parchment .pxi { width: 24px; height: 24px; margin: 0; }
+#screen-main-menu > div:first-child .pixel-btn { min-height: 40px; font-size: 9px; padding: 4px 10px; }
+#screen-main-menu > div:first-child .pixel-btn:last-child { min-width: 44px; padding: 4px 8px; }
+
+#screen-main-menu h1 {
+    font-size: clamp(18px, 6vw, 24px); line-height: 1.25; letter-spacing: 1px; color: #fff;
+    text-shadow: -2px 0 var(--px-ink), 2px 0 var(--px-ink), 0 -2px var(--px-ink), 0 2px var(--px-ink), 3px 4px 0 var(--px-ink);
+}
+#screen-main-menu h1 + p { font-size: 9px; color: var(--px-gold); letter-spacing: .5px;
+    text-shadow: -1px 0 var(--px-ink), 1px 0 var(--px-ink), 0 -1px var(--px-ink), 0 1px var(--px-ink); }
+
+/* kartu pemain */
+#screen-main-menu .pixel-box-parchment.p-3 { gap: 12px; }
+#display-player-name { font-size: 11px; }
+#display-player-title { font-size: 8px; }
+#display-level-text { font-size: 8px; }
+#screen-main-menu button[onclick="editPlayerName()"] { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; margin: -8px -8px -8px 0; }
+#screen-main-menu button[onclick="editPlayerName()"] .pxi { width: 12px; height: 12px; }
+/* bar XP bersegmen ala bar nyawa game lawas */
+#screen-main-menu .h-2.bg-gray-300 { height: 14px; border: 3px solid var(--px-wood); margin-top: 6px;
+    background: repeating-linear-gradient(90deg, #d7ccc8 0 6px, #bcaaa4 6px 8px); }
+#display-xp-bar { background: repeating-linear-gradient(90deg, #66bb6a 0 6px, #2e7d32 6px 8px); }
+
+/* spanduk 30 soal: papan kayu */
+#screen-main-menu .pixel-box-parchment.p-2 { position: relative; padding: 10px 18px; font-size: 9px; line-height: 1.6; color: var(--px-cream);
+    background: linear-gradient(180deg, #b27a40 0 50%, #a06a36 50% 100%); border-color: var(--px-wood);
+    box-shadow: inset 0 3px 0 #cf9356, inset 0 -4px 0 #6b4220, 0 4px 0 var(--px-ink); text-shadow: 1px 1px 0 var(--px-ink); }
+#screen-main-menu .pixel-box-parchment.p-2::before, #screen-main-menu .pixel-box-parchment.p-2::after {
+    content: ''; position: absolute; top: 50%; width: 6px; height: 6px; margin-top: -3px; background: #6b4220; box-shadow: inset 2px 2px 0 #e0b078; }
+#screen-main-menu .pixel-box-parchment.p-2::before { left: 6px; }
+#screen-main-menu .pixel-box-parchment.p-2::after { right: 6px; }
+
+/* tombol utama dan sekunder */
+#screen-main-menu .pixel-btn-action { font-size: 11px; min-height: 56px; }
+#screen-main-menu .grid .pixel-btn:not(.pixel-btn-action) { font-size: 9px; min-height: 48px; padding-left: 6px; padding-right: 6px; }
+#screen-main-menu .grid { gap: 10px 8px; }
+
+/* catatan versi: terbaca di atas awan */
+#screen-main-menu > div:last-child { font-size: 8px; letter-spacing: .5px; color: var(--px-cream);
+    text-shadow: -1px 0 var(--px-ink), 1px 0 var(--px-ink), 0 -1px var(--px-ink), 0 1px var(--px-ink); }
+
+/* ============ 2. PETA LAUT (sebelum main) ============ */
+#screen-adventure > div:first-child .pixel-btn { min-height: 40px; font-size: 8px; padding: 4px 10px; }
+#screen-adventure h2 { font-size: 12px; text-shadow: -1px 0 var(--px-ink), 1px 0 var(--px-ink), 0 -1px var(--px-ink), 0 2px 0 var(--px-ink); }
+#screen-adventure .subj-grid { gap: 8px; margin: 4px 0; }
+.subj-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 2px 8px;
+    background: #fffdf3; border: 3px solid var(--px-wood); box-shadow: inset 0 7px 0 var(--c, #4aa3e8), 0 3px 0 var(--px-ink); text-align: center; }
+.subj-math { --c: #4aa3e8; } .subj-fiqh { --c: #43b24a; } .subj-sport { --c: #ff8a3d; }
+.subj-ic { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; font-size: 24px; line-height: 1; }
+.subj-ic .pxi { width: 36px; height: 36px; margin: 0; vertical-align: top; }
+.subj-name { font-size: 8px; font-weight: bold; color: var(--px-wood); }
+.subj-count { font-size: 7px; color: #5d4037; background: #f1e3b8; border: 2px solid #c9b27a; padding: 2px 5px; }
+#screen-adventure .pixel-btn-action { font-size: 11px; min-height: 56px; }
+#screen-adventure .pixel-box-parchment p { font-size: 8px; line-height: 1.9; }
+
+/* ============ 3. LOBI MULTIPLAYER ============ */
+#screen-mp-lobby .mp-head .pixel-btn, #screen-mp-room .mp-head .pixel-btn { min-height: 40px; font-size: 8px; padding: 4px 10px; }
+#screen-mp-lobby .mp-h2, #screen-mp-room .mp-h2 { font-size: 12px;
+    text-shadow: -1px 0 var(--px-ink), 1px 0 var(--px-ink), 0 -1px var(--px-ink), 0 2px 0 var(--px-ink); }
+#screen-mp-lobby .mp-h2 .pxi { width: 24px; height: 24px; margin-right: 4px; vertical-align: middle; }
+#screen-mp-lobby .mp-dot { width: 16px; height: 16px; box-shadow: inset -2px -2px 0 rgba(0,0,0,.3), inset 2px 2px 0 rgba(255,255,255,.5); }
+#screen-mp-lobby .mp-text { font-size: 8px; line-height: 1.9; }
+
+/* status koneksi: papan kecil berwarna */
+#screen-mp-lobby .mp-status { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 6px; font-size: 8px;
+    background: #fff8e1; border: 3px solid #8d6e63; box-shadow: 0 3px 0 rgba(44,26,14,.45); }
+#screen-mp-lobby .mp-status.ok { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+#screen-mp-lobby .mp-status.bad { background: #ffebee; border-color: #c62828; color: #b71c1c; }
+#screen-mp-lobby .mp-status .pxi { width: 12px; height: 12px; margin: 0; }
+#screen-mp-lobby .mp-btn-lg, #screen-mp-room .mp-btn-lg { font-size: 11px; min-height: 56px; }
+#screen-mp-lobby .mp-codebox { gap: 8px; margin-bottom: 4px; }
+#screen-mp-lobby .mp-codebox .mp-code-input { min-height: 48px; font-size: 11px; letter-spacing: 3px; }
+#screen-mp-lobby .mp-codebox .pixel-btn { min-height: 48px; min-width: 72px; font-size: 9px; }
+
+/* daftar room */
+#screen-mp-lobby .mp-list-panel { display: flex; flex-direction: column; }
+#screen-mp-lobby .mp-list-head { font-size: 9px; padding-bottom: 8px; }
+#screen-mp-lobby .mp-room-row { padding: 8px; min-height: 56px; box-shadow: 0 3px 0 rgba(44,26,14,.4); }
+#screen-mp-lobby .mp-room-name { font-size: 9px; font-weight: bold; margin-bottom: 3px; }
+#screen-mp-lobby .mp-badge { padding: 4px 6px; border-width: 2px; }
+/* layar kosong: ilustrasi perahu pixel, bukan teks polos */
+.mp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; flex: 1 1 auto; min-height: 120px;
+    margin: 2px 0; padding: 14px 10px; border: 3px dashed #a1887f; background: rgba(255,255,255,.35); font-size: 8px; line-height: 1.9; }
+.mp-empty::before { content: ''; width: 56px; height: 56px; background: var(--pxi-boat) center / contain no-repeat; image-rendering: pixelated; }
+
+/* ============ 4. DI DALAM ROOM ============ */
+#screen-mp-room .mp-codeline { gap: 8px; }
+#screen-mp-room #mp-room-code { display: inline-block; padding: 6px 10px 5px; font-size: 14px; letter-spacing: 4px; color: var(--px-gold);
+    background: var(--px-ink); border: 3px solid #8d5a2b; box-shadow: inset 0 0 0 2px #140b05, 0 3px 0 rgba(44,26,14,.5); }
+#screen-mp-room .mp-seats { gap: 8px; }
+#screen-mp-room .mp-seat { min-height: 52px; padding: 6px 8px; font-size: 9px; box-shadow: 0 3px 0 rgba(44,26,14,.4); }
+#screen-mp-room .mp-seat.me { background: #fff8d6; border-color: #c79100; box-shadow: inset 0 0 0 2px #ffe082, 0 3px 0 rgba(44,26,14,.5); }
+#screen-mp-room .mp-seat.empty { background: rgba(255,255,255,.4); opacity: .85; box-shadow: none; }
+#screen-mp-room .mp-badge { padding: 4px 6px; border-width: 2px; display: inline-flex; align-items: center; gap: 3px; }
+#screen-mp-room .mp-badge .pxi { width: 12px; height: 12px; margin: 0; }
+#screen-mp-room #mp-room-info { font-size: 8px; line-height: 1.9; }
+#screen-mp-room .mp-text { font-size: 8px; }
+/* chat */
+#screen-mp-room .mp-chat-head { font-size: 9px; padding-bottom: 8px; }
+#screen-mp-room .mp-chat-log { border-width: 3px; background: rgba(255,255,255,.6); }
+#screen-mp-room .mp-chat-msg { box-shadow: 0 2px 0 rgba(44,26,14,.35); }
+#screen-mp-room .mp-chat-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 8px; line-height: 1.9; }
+#screen-mp-room .mp-chat-empty::before { content: ''; width: 48px; height: 48px; background: var(--pxi-chat) center / contain no-repeat; image-rendering: pixelated; }
+#screen-mp-room .mp-chat-form { gap: 8px; }
+#screen-mp-room .mp-chat-form .mp-chat-input { min-height: 44px; font-size: 10px; }
+#screen-mp-room .mp-chat-form .pixel-btn { min-height: 44px; min-width: 64px; font-size: 9px; }
