@@ -818,8 +818,25 @@ try {
     var ITEM_SEL = '#shop-items-grid .text-2xl, #collection-grid .text-2xl';
     var ALL_SEL = AV_SEL + ', ' + ITEM_SEL;
     var urls = {};
+    /* Teks efek item di Storwin dan Koleksi. Logikanya ada di js/pixel-fx.js: ubah keduanya bersamaan. */
     var FX_DESC = {
-        'furn-1': 'Efek: +25 koin tiap menang (single player)',
+        'ship-1': 'Kapal awal, tanpa efek',
+        'ship-2': 'Efek: +40 koin di akhir balapan (multiplayer)',
+        'ship-3': 'Efek: bangkit 1x, nyawa terakhir pulih jadi 2 (multiplayer)',
+        'ship-4': 'Efek: +5 detik tiap soal (multiplayer)',
+        'ship-5': 'Efek: jawab benar < 10 detik, +2 koin di akhir (multiplayer)',
+        'ship-6': 'Efek: tameng 1x, jawaban salah pertama tak kurangi nyawa (multiplayer)',
+        'outfit-1': 'Efek: +5 XP tiap jawaban benar (single player)',
+        'outfit-2': 'Efek: +10 XP tiap jawaban benar (single player)',
+        'hat-1': 'Efek: +10 detik tiap soal (single player)',
+        'hat-2': 'Efek: +5 detik tiap soal (single player)',
+        'shoes-1': 'Efek: +2 koin tiap jawaban benar (single player)',
+        'shoes-2': 'Efek: +1 koin tiap jawaban benar (single player)',
+        'pet-1': 'Efek: 1 pilihan salah dicoret di soal sulit (single player)',
+        'pet-2': 'Efek: tiap 3 jawaban benar beruntun, +8 koin (single player)',
+        'acc-1': 'Efek: +10 XP lagi bila benar di soal sulit (single player)',
+        'acc-2': 'Efek: waktu habis, +15 detik 1x per balapan (single player)',
+        'furn-1': 'Efek: +25 koin tiap balapan tuntas (single player)',
         'furn-2': 'Efek: tameng 1x per balapan, jawaban salah pertama tak kurangi nyawa (single player)'
     };
 
