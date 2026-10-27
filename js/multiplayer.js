@@ -1341,6 +1341,8 @@ function finalize() {
     R.final = true;
     R.rank = myRank(R);
     applyRewards(R);
+    // kabar untuk js/pixel-fx.js: bonus koin kapal dibayar sesudah hadiah peringkat (tidak ikut skor papan peringkat)
+    try { window.dispatchEvent(new CustomEvent('mp:final', { detail: { why: R.me.why, rank: R.rank } })); } catch (e) {}
     syncLanes();
     const strip = $('mp-race-strip'); if (strip) strip.style.display = 'none';
     if (S.room && S.room.hostId === S.me.id) { S.room.ph = 'waiting'; broadcastRoster(); announce(); }
