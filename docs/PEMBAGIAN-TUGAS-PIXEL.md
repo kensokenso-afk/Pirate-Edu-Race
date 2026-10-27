@@ -16,9 +16,10 @@ Upgrade dilakukan sebagai **lapisan tambahan**. Logika game (`js/game.js`, `js/m
 | `js/pixel-avatar.js` | Claude | avatar, ikon item Storwin dan Koleksi, panel "Tampilanmu" |
 | `js/pixel-fx.js` | Claude | efek Peti Harta dan Meriam Kapal (single player) |
 | `js/game.js` | Claude (hanya tiga kapal baru di `SHOP_ITEMS` dan soal `FQH-06`) | selebihnya tidak disentuh |
-| `css/pixel-icons.css` | Copilot | gaya ikon pixel kecil |
-| `js/pixel-icons.js` | Copilot | emoji dekorasi yang tersisa menjadi sprite pixel |
-| `index.html` | Claude: tag `css/pixel.css`, `#scene-wrap`, empat `<script>` pixel. Copilot: dua baris di `<head>` (lihat bawah) | |
+| `css/pixel-icons.css` | Claude (dikerjakan di PR #6; Copilot tidak sempat mengambilnya) | gaya ikon pixel kecil |
+| `js/pixel-icons.js` | Claude (PR #6, diperluas di PR UI/UX) | emoji dekorasi, tombol, dan judul menjadi sprite pixel; ikon juga dibuka sebagai variabel CSS `--pxi-*` |
+| `css/pixel-ui.css` | Claude | rapikan UI/UX menu utama, peta laut, lobi multiplayer, dan room (tombol, kartu, layar kosong) |
+| `index.html` | Claude: tag `css/pixel.css` dan `css/pixel-ui.css`, `#scene-wrap`, empat `<script>` pixel, markup kartu pelajaran di layar peta laut. Dua baris ikon di `<head>` sudah masuk lewat PR #6 | |
 | `js/multiplayer.js`, `css/style.css`, `css/multiplayer.css` | tidak diubah dalam pekerjaan ini | |
 
 ## Aturan agar tidak bentrok
