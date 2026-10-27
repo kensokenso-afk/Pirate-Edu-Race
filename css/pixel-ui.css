@@ -128,11 +128,13 @@
 #screen-mp-room .mp-seat.empty { background: rgba(255,255,255,.4); opacity: .85; box-shadow: none; }
 #screen-mp-room .mp-badge { padding: 4px 6px; border-width: 2px; display: inline-flex; align-items: center; gap: 3px; }
 #screen-mp-room .mp-badge .pxi { width: 12px; height: 12px; margin: 0; }
-#screen-mp-room #mp-room-info { font-size: 8px; line-height: 1.9; }
+/* keterangan "Pemain: n/4 • butuh minimal ..." disembunyikan (elemen tetap ada agar JS tidak error) */
+#screen-mp-room #mp-room-info { display: none; }
 #screen-mp-room .mp-text { font-size: 8px; }
-/* chat */
+/* chat — dibuat lebih tinggi supaya lebih banyak pesan terlihat sekaligus */
+#screen-mp-room .mp-chat { min-height: 400px; }
 #screen-mp-room .mp-chat-head { font-size: 9px; padding-bottom: 8px; }
-#screen-mp-room .mp-chat-log { border-width: 3px; background: rgba(255,255,255,.6); }
+#screen-mp-room .mp-chat-log { min-height: 280px; border-width: 3px; background: rgba(255,255,255,.6); }
 #screen-mp-room .mp-chat-msg { box-shadow: 0 2px 0 rgba(44,26,14,.35); }
 #screen-mp-room .mp-chat-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 8px; line-height: 1.9; }
 #screen-mp-room .mp-chat-empty::before { content: ''; width: 48px; height: 48px; background: var(--pxi-chat) center / contain no-repeat; image-rendering: pixelated; }
