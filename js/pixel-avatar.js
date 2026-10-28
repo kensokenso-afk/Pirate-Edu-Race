@@ -820,7 +820,6 @@ try {
     var urls = {};
     /* Teks efek item di Storwin dan Koleksi. Logikanya ada di js/pixel-fx.js: ubah keduanya bersamaan. */
     var FX_DESC = {
-        'ship-1': 'Kapal awal, tanpa efek',
         'ship-2': 'Efek: +40 koin di akhir balapan (multiplayer)',
         'ship-3': 'Efek: bangkit 1x, nyawa terakhir pulih jadi 2 (multiplayer)',
         'ship-4': 'Efek: +5 detik tiap soal (multiplayer)',

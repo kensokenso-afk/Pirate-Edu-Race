@@ -51,7 +51,7 @@ const SHOP_ITEMS = [
     { id: 'ship-6',  name: 'Kapal Feri',     category: 'ship',        price: 450, icon: '⛴️' },
     { id: 'outfit-1',name: 'Baju Pelaut',    category: 'outfit',      price: 150, icon: '👕' },
     { id: 'outfit-2',name: 'Jubah Kapten',   category: 'outfit',      price: 300, icon: '🧥' },
-    { id: 'hat-1',   name: 'Topi Bajak',     category: 'hat',         price: 200, icon: '🎩' },
+    { id: 'hat-1',   name: 'Topi Bajak Laut', category: 'hat',         price: 200, icon: '🎩' },
     { id: 'hat-2',   name: 'Bandana',        category: 'hat',         price: 80,  icon: '🧢' },
     { id: 'shoes-1', name: 'Sepatu Boots',   category: 'shoes',       price: 120, icon: '👢' },
     { id: 'shoes-2', name: 'Sandal Kayu',    category: 'shoes',       price: 60,  icon: '🩴' },
@@ -905,8 +905,8 @@ function renderShopItems(filter = 'all') {
         const isEquipped = GameState.equipped[item.category] === item.id;
         let btnLabel, btnAttr;
         if (isEquipped) {
-            btnLabel = "✅ Dipakai";
-            btnAttr = 'disabled';
+            btnLabel = "Lepas";
+            btnAttr = `onclick="unequipItem('${item.id}')"`;
         } else if (isOwned) {
             btnLabel = "Pakai";
             btnAttr = `onclick="equipItem('${item.id}')"`;
@@ -916,7 +916,7 @@ function renderShopItems(filter = 'all') {
         }
 
         const card = document.createElement('div');
-        card.className = "pixel-box-parchment p-2 flex flex-col justify-between items-center text-center";
+        card.className = "pixel-box-parchment p-2 flex flex-col justify-between items-center text-center" + (isEquipped ? " is-equipped" : "");
         card.innerHTML = `
             <span class="text-2xl my-0.5">${item.icon}</span>
             <span class="text-[7px] font-bold leading-tight">${item.name}</span>
@@ -951,6 +951,16 @@ function equipItem(id) {
     const item = SHOP_ITEMS.find(i => i.id === id);
     if (!item || !GameState.inventory.includes(id)) return;
     GameState.equipped[item.category] = id;
+    saveGameState();
+    playSound('click');
+    renderShopItems(currentShopFilter);
+}
+
+// Melepas item yang sedang dipakai (item tetap dimiliki dan bisa dipakai lagi kapan saja)
+function unequipItem(id) {
+    const item = SHOP_ITEMS.find(i => i.id === id);
+    if (!item || GameState.equipped[item.category] !== id) return;
+    delete GameState.equipped[item.category];
     saveGameState();
     playSound('click');
     renderShopItems(currentShopFilter);

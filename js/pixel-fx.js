@@ -17,7 +17,7 @@ try {
        ship-6 Kapal Feri   : tameng 1x; jawaban salah pertama tidak mengurangi nyawa
      SINGLE PLAYER
        outfit-1 Baju Pelaut: +5 XP tiap jawaban benar          outfit-2 Jubah Kapten: +10 XP
-       hat-1 Topi Bajak    : +10 detik tiap soal               hat-2 Bandana: +5 detik
+       hat-1 Topi Bajak Laut: +10 detik tiap soal               hat-2 Bandana: +5 detik
        shoes-1 Sepatu Boots: +2 koin tiap jawaban benar        shoes-2 Sandal Kayu: +1 koin
        pet-1 Burung Beo    : 1 pilihan salah dicoret di soal sulit
        pet-2 Monyet Nakal  : tiap 3 jawaban benar beruntun, +8 koin
