@@ -33,6 +33,7 @@
         #sw-preview #sw-pav, #sw-preview #sw-pship { flex: 0 0 auto; }
         #sw-preview #sw-pav .pxav { --pxs: 40px; }
         #sw-preview #sw-ptxt { flex: 1 1 auto; min-width: 0; }
+        #shop-items-grid .is-equipped { box-shadow: inset 0 0 0 3px #43a047; }
         .fx-desc { display: block; font-size: 6px; line-height: 1.4; color: #1b5e20; font-weight: bold; margin-top: 2px; }
         #fx-toast { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); z-index: 60; max-width: 86%; text-align: center;
             background: #fff8d6; border: 3px solid #3e2723; padding: 6px 10px; font-size: 8px; font-weight: bold; color: #3e2723;
