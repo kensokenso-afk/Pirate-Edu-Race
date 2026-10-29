@@ -180,8 +180,9 @@ const VICTORY_BONUS = {
 let audioCtx = null;
 
 /* Lagu latar: "Badai di Samudra" (file mp3, diputar berulang).
-   File harus ada di repositori pada path BGM_SRC. Efek suara (playSound) tetap memakai WebAudio. */
-const BGM_SRC = 'audio/badai-di-samudra.mp3';
+   File harus ada di repositori pada path BGM_SRC (di folder yang sama dengan index.html).
+   Efek suara (playSound) tetap memakai WebAudio. */
+const BGM_SRC = 'Badai_di_Samudra_piano.mp3';
 const BGM_VOLUME = 0.5;
 let bgmAudio = null;
 let bgmPlaying = false;
