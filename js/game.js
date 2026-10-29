@@ -178,21 +178,13 @@ const VICTORY_BONUS = {
    AUDIO
    ===================================================================== */
 let audioCtx = null;
-let bgmInterval = null;
-let bgmStep = 0;
 
-const BGM_MELODY = [
-    220,0,261.63,293.66,329.63,329.63,329.63,0,
-    349.23,349.23,329.63,293.66,329.63,0,220,0,
-    293.66,293.66,293.66,0,261.63,261.63,261.63,0,
-    246.94,246.94,220,207.65,220,0,0,0
-];
-const BGM_BASS = [
-    110,0,110,0,110,0,110,0,
-    130.81,0,130.81,0,110,0,110,0,
-    146.83,0,146.83,0,130.81,0,130.81,0,
-    123.47,0,123.47,0,110,0,110,0
-];
+/* Lagu latar: "Badai di Samudra" (file mp3, diputar berulang).
+   File harus ada di repositori pada path BGM_SRC. Efek suara (playSound) tetap memakai WebAudio. */
+const BGM_SRC = 'audio/badai-di-samudra.mp3';
+const BGM_VOLUME = 0.5;
+let bgmAudio = null;
+let bgmPlaying = false;
 
 function initAudio() {
     if (!audioCtx) {
@@ -203,44 +195,28 @@ function initAudio() {
 
 function startBGM() {
     if (!GameState.musicOn) return;
-    if (bgmInterval) return;
-    initAudio();
-    if (!audioCtx) return;
-    bgmStep = 0;
-    bgmInterval = setInterval(() => {
-        if (!GameState.musicOn || !audioCtx) return;
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        // Jangan jadwalkan nada saat context belum running (currentTime beku -> nada menumpuk)
-        if (audioCtx.state !== 'running') return;
-        const mFreq = BGM_MELODY[bgmStep % BGM_MELODY.length];
-        const bFreq = BGM_BASS[bgmStep % BGM_BASS.length];
-        const now = audioCtx.currentTime;
+    if (!bgmAudio) {
         try {
-            if (mFreq > 0) {
-                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(mFreq, now);
-                gain.gain.setValueAtTime(0.025, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(now); osc.stop(now + 0.13);
-            }
-            if (bFreq > 0) {
-                const bOsc = audioCtx.createOscillator(), bGain = audioCtx.createGain();
-                bOsc.type = 'triangle';
-                bOsc.frequency.setValueAtTime(bFreq, now);
-                bGain.gain.setValueAtTime(0.035, now);
-                bGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-                bOsc.connect(bGain); bGain.connect(audioCtx.destination);
-                bOsc.start(now); bOsc.stop(now + 0.15);
-            }
-        } catch(e){}
-        bgmStep++;
-    }, 160);
+            bgmAudio = new Audio(BGM_SRC);
+            bgmAudio.loop = true;
+            bgmAudio.preload = 'auto';
+            bgmAudio.volume = BGM_VOLUME;
+        } catch(e) { bgmAudio = null; return; }
+    }
+    if (bgmPlaying) return;
+    bgmPlaying = true;
+    try {
+        const p = bgmAudio.play();
+        // Autoplay diblokir browser / file belum ada -> tandai belum main; dicoba lagi saat interaksi/pindah layar berikutnya
+        if (p && typeof p.catch === 'function') p.catch(() => { bgmPlaying = false; });
+    } catch(e) { bgmPlaying = false; }
 }
 
 function stopBGM() {
-    if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
+    bgmPlaying = false;
+    if (bgmAudio) {
+        try { bgmAudio.pause(); bgmAudio.currentTime = 0; } catch(e){}
+    }
 }
 
 function playSound(type) {
