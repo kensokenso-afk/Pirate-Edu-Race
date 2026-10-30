@@ -183,7 +183,7 @@ let audioCtx = null;
    File harus ada di repositori pada path BGM_SRC (di folder yang sama dengan index.html).
    Efek suara (playSound) tetap memakai WebAudio. */
 const BGM_SRC = 'Badai_di_Samudra_piano.mp3';
-const BGM_VOLUME = 0.5;
+const BGM_VOLUME = 1.0;   // maksimum untuk elemen audio (lagu sudah ter-master ±-13,5 LUFS, puncak -1,3 dB: aman tanpa clipping)
 let bgmAudio = null;
 let bgmPlaying = false;
 
