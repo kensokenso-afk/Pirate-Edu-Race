@@ -1738,6 +1738,151 @@ leaveRoomCore = function () {                  // catatan larangan hanya berlaku
 kickLoad();
 
 /* =====================================================================
+   AKUN — INTEGRASI MULTIPLAYER (TAMBAHAN BARU)
+   ---------------------------------------------------------------------
+   Multiplayer memakai akun supaya larangan "dikeluarkan host selama 1 menit" menempel pada AKUN pemain,
+   bukan pada ID sesi game yang berganti setiap halaman dimuat ulang.
+   • Logika akun/login/leaderboard ada di js/account.js (dimuat otomatis di bawah). Jika berkas itu tidak
+     termuat, semua pembungkus di sini langsung meneruskan ke fungsi aslinya (perilaku lama).
+   • Pemain TIDAK mengirim token sesi akunnya ke room (topik room itu publik). Ia menukarnya dengan TIKET MASUK
+     ROOM berumur 5 menit yang terikat ke ID sesi game + kode room, lalu menyertakannya di permintaan 'join'
+     (ikut ditandatangani bersama pesan oleh logika tanda tangan yang sudah ada — logika itu tidak disentuh).
+   • HOST memeriksa tiket (tanda tangan ECDSA, ID sesi, kode room, masa berlaku) sebelum memakai logika 'join'
+     yang lama. Tanpa tiket sah -> ditolak ('login'). Akun yang sedang dilarang -> ditolak ('banned').
+   • Host mencatat pemetaan ID sesi -> ID akun dan menyiarkannya ke anggota ('acct') agar host pengganti
+     tetap bisa menegakkan larangan. Pesan 'kick' membawa ID akun yang dikeluarkan ('acct') supaya semua anggota
+     ikut mencatat larangannya.
+   • Dibuat sebagai pembungkus fungsi lama (openLobby, joinRoom, pub, hostOnJoin, onDeny, onRoomMsg,
+     kickOnMsg, leaveRoomCore) — isi fungsi lama tidak diubah.
+   ===================================================================== */
+const ACCTMAP = {};                        // kode room -> { ID sesi pemain: ID akun }
+const ACCT_PID_RE = /^[a-z0-9]{8}$/;
+let ACCT_PASS = { code: null, pass: null, at: 0 };
+let ACCT_REFRESH = null;                    // pembaruan tiket berkala selama berada di room
+
+(function loadAccountModule() {
+    try {
+        if (window.PirateAcct || document.getElementById('account-js')) return;
+        const s = document.createElement('script');
+        s.id = 'account-js'; s.src = 'js/account.js'; s.async = false;
+        document.head.appendChild(s);
+    } catch (e) {}
+})();
+
+function acctApi() { return window.PirateAcct || null; }
+function acctBanKey(pid) { return '@' + pid; }           // kunci larangan akun di KICK.ids (dibedakan dari larangan per-sesi)
+function acctBan(code, pid) {
+    KICK.ids[code] = KICK.ids[code] || {};
+    KICK.ids[code][acctBanKey(pid)] = nowMs() + KICK_BAN_MS;
+}
+function acctStartRefresh() {                           // tiket berumur 5 menit; perbarui tiap 2 menit agar sambung-ulang ke host tetap sah
+    if (ACCT_REFRESH) return;
+    ACCT_REFRESH = setInterval(function () {
+        const a = acctApi(), R = S.room;
+        if (!a || !R) { clearInterval(ACCT_REFRESH); ACCT_REFRESH = null; return; }
+        if (!a.valid()) return;
+        a.roomPass(S.me.id, R.code).then(function (r) {
+            if (r.pass && S.room && S.room.code === R.code) ACCT_PASS = { code: R.code, pass: r.pass, at: nowMs() };
+        });
+    }, 120000);
+}
+
+const KA = { openLobby: openLobby, joinRoom: joinRoom, pub: pub, hostOnJoin: hostOnJoin, onDeny: onDeny,
+             onRoomMsg: onRoomMsg, kickOnMsg: kickOnMsg, leaveRoomCore: leaveRoomCore };
+
+openLobby = function () {                                // multiplayer wajib masuk akun
+    const a = acctApi();
+    if (!a) return KA.openLobby.apply(this, arguments);
+    if (!a.valid()) { a.open(function () { openLobby(); }, null); return; }
+    a.renderLobbyStrip();
+    return KA.openLobby.apply(this, arguments);
+};
+
+joinRoom = function (code) {                             // tukar token sesi -> tiket masuk room, baru bergabung
+    const a = acctApi();
+    if (!a) return KA.joinRoom.apply(this, arguments);
+    const c = normCode(code);
+    if (!a.valid()) { a.open(function () { joinRoom(c); }, 'Masuk dulu untuk bergabung ke room.'); return; }
+    if (c.length !== 5 || S.room || S.joining) return KA.joinRoom.apply(this, arguments);
+    note('Menyiapkan akses ke room...');
+    a.roomPass(S.me.id, c).then(function (r) {
+        if (!r.pass) {
+            if (r.error === 'login') a.open(function () { joinRoom(c); }, 'Sesi akunmu habis. Masuk lagi untuk bergabung.');
+            else showAlert('BELUM BISA MASUK', 'Tidak bisa terhubung ke server akun. Periksa koneksi internetmu lalu coba lagi.');
+            return;
+        }
+        ACCT_PASS = { code: c, pass: r.pass, at: nowMs() };
+        acctStartRefresh();
+        KA.joinRoom(c);
+    });
+};
+
+pub = function (topic, obj) {                            // 'join' membawa tiket masuk room; 'kick' membawa ID akun yang dikeluarkan
+    if (obj && typeof obj === 'object' && typeof topic === 'string') {
+        if (obj.t === 'join' && ACCT_PASS.pass && topic === roomTopic(ACCT_PASS.code) && nowMs() - ACCT_PASS.at < 290000) {
+            obj.pass = ACCT_PASS.pass;
+        } else if (obj.t === 'kick' && S.room && typeof obj.to === 'string') {
+            const pid = (ACCTMAP[S.room.code] || {})[obj.to];
+            if (pid) { obj.acct = pid; acctBan(S.room.code, pid); }
+        }
+    }
+    return KA.pub.apply(this, arguments);
+};
+
+hostOnJoin = function (code, m) {                        // HOST memeriksa tiket masuk room sebelum menerima pemain baru
+    const a = acctApi(), R = S.room;
+    if (!a || !R || R.code !== code || R.hostId !== S.me.id || !m || typeof m.from !== 'string') return KA.hostOnJoin.apply(this, arguments);
+    const self = this, args = arguments, from = m.from;
+    if (R.players.some(function (p) { return p.id === from; })) return KA.hostOnJoin.apply(self, args);   // anggota lama memperbarui datanya
+    a.verifyPass(m.pass, from, code).then(function (pid) {
+        const R2 = S.room;
+        if (!R2 || R2.code !== code || R2.hostId !== S.me.id) return;
+        if (!pid) { pub(roomTopic(code), { t: 'deny', from: S.me.id, to: from, why: 'login' }, 1); return; }
+        const left = kickIdLeft(code, acctBanKey(pid));
+        if (left > 0) { pub(roomTopic(code), { t: 'deny', from: S.me.id, to: from, why: 'banned', ms: left }, 1); return; }
+        const map = ACCTMAP[code] = ACCTMAP[code] || {};
+        map[from] = pid;
+        KA.hostOnJoin.apply(self, args);                 // lanjut ke pemeriksaan larangan per-sesi + logika lama
+        pub(roomTopic(code), { t: 'acct', from: S.me.id, map: map }, 1);
+    });
+};
+
+onRoomMsg = function (code, m) {                         // anggota mencatat pemetaan sesi -> akun dari host
+    const R = S.room;
+    if (R && R.code === code && m && m.t === 'acct' && m.from === R.hostId && m.map && typeof m.map === 'object') {
+        const map = ACCTMAP[code] = ACCTMAP[code] || {};
+        Object.keys(m.map).slice(0, 8).forEach(function (sid) {
+            const pid = m.map[sid];
+            if (ID_RE.test(sid) && typeof pid === 'string' && ACCT_PID_RE.test(pid)) map[sid] = pid;
+        });
+    }
+    return KA.onRoomMsg.apply(this, arguments);
+};
+
+kickOnMsg = function (code, m) {                         // anggota ikut mencatat larangan akun yang dikeluarkan host
+    const R = S.room;
+    if (R && R.code === code && m && m.from === R.hostId && m.to !== S.me.id && typeof m.acct === 'string' && ACCT_PID_RE.test(m.acct)) acctBan(code, m.acct);
+    return KA.kickOnMsg.apply(this, arguments);
+};
+
+onDeny = function (code, m) {
+    if (m && m.why === 'login') {
+        if (m.to !== S.me.id || !S.joining || S.joining.code !== code) return;
+        cancelJoin();
+        showAlert('BELUM BISA MASUK', 'Host tidak bisa memastikan akunmu. Coba masuk ke room itu lagi.');
+        return;
+    }
+    return KA.onDeny.apply(this, arguments);
+};
+
+leaveRoomCore = function () {                            // catatan akun hanya berlaku selama saya ada di room itu
+    const R = S.room;
+    if (R) delete ACCTMAP[R.code];
+    ACCT_PASS = { code: null, pass: null, at: 0 };
+    return KA.leaveRoomCore.apply(this, arguments);
+};
+
+/* =====================================================================
    INISIALISASI & API PUBLIK
    ===================================================================== */
 S.me.id = randId(8);
