@@ -186,6 +186,7 @@ const BGM_SRC = 'Badai_di_Samudra_widget.mp3';
 const BGM_VOLUME = 1.0;   // maksimum untuk elemen audio (lagu ter-master ±-11,7 LUFS, puncak -1,4 dB: aman tanpa clipping)
 let bgmAudio = null;
 let bgmPlaying = false;
+let bgmResumeOnShow = false;   // musik sempat berjalan lalu dijeda karena halaman masuk background -> lanjutkan saat kembali
 
 function initAudio() {
     if (!audioCtx) {
@@ -196,6 +197,7 @@ function initAudio() {
 
 function startBGM() {
     if (!GameState.musicOn) return;
+    if (document.hidden) { bgmResumeOnShow = true; return; }   // halaman di background: jangan bunyi, mulai saat kembali
     if (!bgmAudio) {
         try {
             bgmAudio = new Audio(BGM_SRC);
@@ -215,13 +217,32 @@ function startBGM() {
 
 function stopBGM() {
     bgmPlaying = false;
+    bgmResumeOnShow = false;
     if (bgmAudio) {
         try { bgmAudio.pause(); bgmAudio.currentTime = 0; } catch(e){}
     }
 }
 
+/* Musik dijeda saat pemain pindah aplikasi/tab atau mengunci layar, dan dilanjutkan (dari posisi yang sama) saat kembali.
+   'pagehide' menutup celah iOS Safari yang kadang tidak mengirim 'visibilitychange'. */
+function pauseBGMForBackground() {
+    if (bgmPlaying) bgmResumeOnShow = true;
+    bgmPlaying = false;
+    if (bgmAudio) { try { bgmAudio.pause(); } catch(e){} }
+    if (audioCtx && audioCtx.state === 'running') { try { audioCtx.suspend(); } catch(e){} }
+}
+function resumeBGMFromBackground() {
+    if (document.hidden || !bgmResumeOnShow) return;
+    bgmResumeOnShow = false;
+    initAudio();
+    if (GameState.musicOn) startBGM();
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseBGMForBackground(); else resumeBGMFromBackground(); });
+window.addEventListener('pagehide', pauseBGMForBackground);
+window.addEventListener('pageshow', resumeBGMFromBackground);
+
 function playSound(type) {
-    if (!GameState.sfxOn) return;
+    if (!GameState.sfxOn || document.hidden) return;   // tidak ada efek suara saat halaman di background
     initAudio();
     if (!audioCtx) return;
     try {
