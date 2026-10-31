@@ -115,6 +115,23 @@ function loadGameState() {
     if (!GameState.equipped || typeof GameState.equipped !== 'object' || Array.isArray(GameState.equipped)) GameState.equipped = {};
     if (!Array.isArray(GameState.leaderboard)) GameState.leaderboard = [];
     GameState.leaderboard = GameState.leaderboard.filter(function (l) { return l && typeof l.name === 'string' && isFinite(l.score); });
+    // Validasi data tersimpan (bisa rusak / diubah manual lewat DevTools): angka tidak boleh negatif/bukan angka,
+    // avatar & judul harus teks aman, inventaris & item terpasang hanya boleh berisi item toko yang sah dan dimiliki.
+    ['coins', 'xp', 'matches', 'wins', 'correctCount', 'wrongCount'].forEach(function (k) {
+        const v = Math.floor(Number(GameState[k]));
+        GameState[k] = (isFinite(v) && v > 0) ? v : 0;
+    });
+    GameState.level = (isFinite(GameState.level) && GameState.level >= 1) ? Math.floor(GameState.level) : 1;
+    if (!/^[^<>&"'`\\]{1,16}$/.test(GameState.playerAvatar)) GameState.playerAvatar = '🤓';   // avatar masuk ke innerHTML -> tolak karakter HTML
+    GameState.playerTitle = String(GameState.playerTitle).replace(/[\u0000-\u001F\u007F]/g, '').slice(0, 30) || 'Pelaut Pemula';
+    const shopIds = {};
+    SHOP_ITEMS.forEach(function (it) { shopIds[it.id] = it; });
+    GameState.inventory = GameState.inventory.filter(function (id, i, a) { return shopIds[id] && a.indexOf(id) === i; });
+    Object.keys(GameState.equipped).forEach(function (cat) {
+        const id = GameState.equipped[cat], it = shopIds[id];
+        if (typeof id !== 'string' || !it || it.category !== cat || GameState.inventory.indexOf(id) < 0) delete GameState.equipped[cat];
+    });
+    GameState.leaderboard.forEach(function (l) { l.score = Math.max(0, Math.floor(Number(l.score))); });
     GameState.musicOn = localStorage.getItem('pirate_music') !== 'false';
     GameState.sfxOn   = localStorage.getItem('pirate_sfx') !== 'false';
     } catch (e) { console.warn('localStorage tidak tersedia, memakai data sementara:', e); }
@@ -457,13 +474,17 @@ function submitEditName() {
     closeEditName();
 }
 
+function escapeHtml(t) {
+    return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+}
+
 function renderAvatarHTML() {
     const cats = ['hat', 'accessories', 'outfit', 'shoes', 'pet'];
     const icons = cats.map(c => {
         const it = SHOP_ITEMS.find(s => s.id === GameState.equipped[c]);
         return it ? it.icon : '';
     }).join('');
-    return GameState.playerAvatar + (icons ? `<div class="text-[10px] leading-none mt-0.5">${icons}</div>` : '');
+    return escapeHtml(GameState.playerAvatar) + (icons ? `<div class="text-[10px] leading-none mt-0.5">${icons}</div>` : '');
 }
 
 function updateMainMenuUI() {
