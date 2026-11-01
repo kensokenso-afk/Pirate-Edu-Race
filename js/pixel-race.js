@@ -467,6 +467,15 @@ const RaceScene = (() => {
     cv.id = 'race-canvas'; cv.setAttribute('aria-hidden', 'true');
     track.insertBefore(cv, track.firstChild);
     const ctx = cv.getContext('2d', { alpha: false });
+    // Cadangan: bila arena pixel tidak bisa dipakai, buang canvas & cabut kelas agar kapal emoji lama tampil lagi.
+    function fallback(err) {
+        console.warn('Arena balapan dimatikan:', err);
+        try { running = false; cancelAnimationFrame(raf); } catch (e) { /* belum diinisialisasi */ }
+        document.documentElement.classList.remove('px-race');
+        if (cv.parentNode) cv.parentNode.removeChild(cv);
+    }
+    if (!ctx) { cv.remove(); return {}; }
+    document.documentElement.classList.add('px-race');
     const box = document.getElementById('game-container');
 
     const C = {
@@ -666,15 +675,19 @@ const RaceScene = (() => {
         raf = requestAnimationFrame(loop);
         if (now - lastDraw < FRAME_MS - 1) return;
         const dt = Math.min(0.1, (now - lastDraw) / 1000 || 0.05); lastDraw = now;
-        if (track.clientWidth !== lastCssW || track.clientHeight !== lastCssH) layout();
-        draw(now / 1000, dt);
+        try {
+            if (track.clientWidth !== lastCssW || track.clientHeight !== lastCssH) layout();
+            draw(now / 1000, dt);
+        } catch (e) { fallback(e); }
     }
     function isActive() { return screen.classList.contains('active') && !document.hidden; }
     function stop() { running = false; cancelAnimationFrame(raf); }
     function sync() {
         stop();
         if (!isActive()) return;
-        if (!layout()) return;
+        let ok = false;
+        try { ok = layout(); } catch (e) { fallback(e); return; }
+        if (!ok) return;
         running = true; lastDraw = performance.now(); raf = requestAnimationFrame(loop);
     }
     new MutationObserver(sync).observe(screen, { attributes: true, attributeFilter: ['class'] });
@@ -687,4 +700,11 @@ const RaceScene = (() => {
     return { sync, stop };
 })();
 
-} catch (e) { console.warn('Arena balapan dimatikan:', e); }
+} catch (e) {
+    console.warn('Arena balapan dimatikan:', e);
+    // cadangan: pastikan kapal emoji lama tampil lagi dan canvas yatim dibuang
+    try {
+        document.documentElement.classList.remove('px-race');
+        const oc = document.getElementById('race-canvas'); if (oc && oc.parentNode) oc.parentNode.removeChild(oc);
+    } catch (e2) { /* abaikan */ }
+}

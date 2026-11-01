@@ -243,7 +243,28 @@
     }
 
     /* ---------- leaderboard terikat akun ---------- */
-    var MATCH = { ticket: Promise.resolve(null) };         // janji berisi {id, mode, owner} atau null
+    var MATCH = { ticket: Promise.resolve(null), gen: 0 }; // janji berisi {id, mode, owner} atau null; gen = nomor pertandingan
+    var TICKET_RETRY_MS = [0, 1500, 4000, 8000];           // jeda sebelum tiap percobaan minta tiket (4 percobaan)
+
+    // Minta tiket pertandingan; ulangi bila jaringan putus / server error / 429. Berhenti bila sesi habis (401),
+    // ditolak server (4xx lain), atau pertandingan sudah berganti. Hasil: {id, mode, owner} atau null.
+    function requestTicket(mode, tok, owner, gen) {
+        function attempt(i) {
+            return new Promise(function (res) { setTimeout(res, TICKET_RETRY_MS[i]); }).then(function () {
+                if (gen !== MATCH.gen || !valid() || ACCT.pid !== owner) return null;
+                return lbPost('/api/match/start', { mode: mode, tok: tok }).then(function (r) {
+                    r = r || { status: 0 };
+                    if (r.status === 200 && r.data && typeof r.data.ticket === 'string') return { id: r.data.ticket, mode: mode, owner: owner };
+                    if (r.status === 401) { clear(); return null; }
+                    var retryable = !r.status || r.status >= 500 || r.status === 429;
+                    return retryable && i + 1 < TICKET_RETRY_MS.length ? attempt(i + 1) : null;
+                }, function () {
+                    return i + 1 < TICKET_RETRY_MS.length ? attempt(i + 1) : null;
+                });
+            });
+        }
+        return attempt(0).catch(function () { return null; });
+    }
 
     function sqLoad() { try { var a = JSON.parse(localStorage.getItem(SQ_LS) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
     function sqSave(a) { try { localStorage.setItem(SQ_LS, JSON.stringify(a.slice(-10))); } catch (e) {} }
@@ -343,12 +364,10 @@
             var out = LBW.launchRaceGame.apply(this, arguments);
             lbNote('');
             var mode = matchMode();
-            if (!valid()) { MATCH.ticket = Promise.resolve(null); return out; }
+            if (!valid()) { MATCH.gen++; MATCH.ticket = Promise.resolve(null); return out; }
             var owner = ACCT.pid, tok = ACCT.tok;
-            MATCH.ticket = lbPost('/api/match/start', { mode: mode, tok: tok }).then(function (r) {
-                if (r.status === 401) clear();
-                return r && r.status === 200 && r.data && typeof r.data.ticket === 'string' ? { id: r.data.ticket, mode: mode, owner: owner } : null;
-            }).catch(function () { return null; });
+            var gen = ++MATCH.gen;                          // penanda pertandingan ini; retry berhenti bila sudah ada pertandingan baru
+            MATCH.ticket = requestTicket(mode, tok, owner, gen);
             return out;
         };
 
