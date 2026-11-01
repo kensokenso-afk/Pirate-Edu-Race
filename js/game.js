@@ -183,7 +183,18 @@ let raceSession = 0;
 let lastNotifiedLevel = 1;
 let currentShopFilter = 'all';
 
+/* ATURAN SKOR — ANGKA INI DIVALIDASI SERVER (fungsi database `lb_submit_verified`, lihat docs/AKUN-LEADERBOARD.md).
+   Mengubah SCORE_RULES atau VICTORY_BONUS di sini tanpa menyesuaikan fungsi itu membuat skor yang sah ditolak diam-diam
+   (skor = COIN_PER_CORRECT*benar + STREAK_BONUS*benar-saat-streak>=STREAK_BONUS_AT + bonus peringkat; salah <= START_HP + 1). */
+const SCORE_RULES = {
+    COIN_PER_CORRECT: 5,   // koin per jawaban benar
+    STREAK_BONUS_AT: 5,    // streak minimal agar dapat bonus
+    STREAK_BONUS: 5,       // koin tambahan per jawaban benar saat streak >= STREAK_BONUS_AT
+    START_HP: 5            // nyawa awal (batas salah di server = START_HP + 1 perisai/bangkit)
+};
+
 // PERBAIKAN-2 (bug 7): bonus kemenangan mengikuti peringkat (juara 1 tetap +350 XP / +250 koin seperti sebelumnya)
+// KOIN per peringkat (250/175/100/50) harus sama dengan bonus peringkat di `lb_submit_verified`.
 const VICTORY_BONUS = {
     1: { xp: 350, coins: 250 },
     2: { xp: 250, coins: 175 },
@@ -311,7 +322,11 @@ function playSound(type) {
    UI / NAVIGATION
    ===================================================================== */
 function switchScreen(screenId) {
-    playSound('click');
+    // Klik tidak dibunyikan untuk transisi otomatis ke layar akhir (menimpa jingle kemenangan/kalah)
+    // dan saat layar tujuan sudah aktif (pemanggilan ganda, mis. keluar balapan multiplayer).
+    const tgt = document.getElementById(screenId);
+    const alreadyThere = !!(tgt && tgt.classList.contains('active'));
+    if (screenId !== 'screen-victory' && screenId !== 'screen-gameover' && !alreadyThere) playSound('click');
     if (GameState.musicOn && screenId !== 'screen-victory' && screenId !== 'screen-gameover') startBGM();
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const target = document.getElementById(screenId);
@@ -531,7 +546,7 @@ function shuffleArray(array) {
 function launchRaceGame() {
     switchScreen('screen-gameplay');
 
-    GameState.hp = 5;
+    GameState.hp = SCORE_RULES.START_HP;
     playerSteps = 0;
     botSteps = [0, 0, 0];
     currentQuestionIdx = 0;
@@ -735,7 +750,7 @@ function handleAnswer(isCorrect, isTimeout) {
         if (streakCount > bestStreak) bestStreak = streakCount;
         currentMatchCorrect++;
         GameState.correctCount++;
-        GameState.coins += 5 + (streakCount >= 5 ? 5 : 0);
+        GameState.coins += SCORE_RULES.COIN_PER_CORRECT + (streakCount >= SCORE_RULES.STREAK_BONUS_AT ? SCORE_RULES.STREAK_BONUS : 0);
         GameState.xp += xpGain;
         playerSteps++;
         if (GameState.xp >= GameState.level * 100) {
