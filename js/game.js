@@ -204,6 +204,7 @@ const BGM_VOLUME = 1.0;   // maksimum untuk elemen audio (lagu ter-master ±-11,
 let bgmAudio = null;
 let bgmPlaying = false;
 let bgmResumeOnShow = false;   // musik sempat berjalan lalu dijeda karena halaman masuk background -> lanjutkan saat kembali
+let bgmFailed = false;         // file musik tidak ada / tidak bisa didecode: jangan diminta ulang di setiap pindah layar
 
 function initAudio() {
     if (!audioCtx) {
@@ -213,11 +214,13 @@ function initAudio() {
 }
 
 function startBGM() {
-    if (!GameState.musicOn) return;
+    if (!GameState.musicOn || bgmFailed) return;
     if (document.hidden) { bgmResumeOnShow = true; return; }   // halaman di background: jangan bunyi, mulai saat kembali
     if (!bgmAudio) {
         try {
             bgmAudio = new Audio(BGM_SRC);
+            // 404 / format tidak didukung: tandai gagal sekali saja (autoplay diblokir TIDAK termasuk, itu dicoba lagi)
+            bgmAudio.addEventListener('error', () => { bgmFailed = true; bgmPlaying = false; });
             bgmAudio.loop = true;
             bgmAudio.preload = 'auto';
             bgmAudio.volume = BGM_VOLUME;
@@ -228,7 +231,10 @@ function startBGM() {
     try {
         const p = bgmAudio.play();
         // Autoplay diblokir browser / file belum ada -> tandai belum main; dicoba lagi saat interaksi/pindah layar berikutnya
-        if (p && typeof p.catch === 'function') p.catch(() => { bgmPlaying = false; });
+        if (p && typeof p.catch === 'function') p.catch((err) => {
+            bgmPlaying = false;
+            if (err && err.name === 'NotSupportedError') bgmFailed = true;   // sumber tidak ada/tidak didukung; NotAllowedError = autoplay, coba lagi nanti
+        });
     } catch(e) { bgmPlaying = false; }
 }
 
@@ -1147,9 +1153,15 @@ function lbDrawEntries(list, entries) {
         const row = document.createElement('div');
         row.className = `flex justify-between items-center p-2 border border-[#3e2723] ${isPlayer ? 'bg-yellow-100 font-bold' : 'bg-white/90'}`;
         // Nama berasal dari input pemain lain -> wajib lewat textContent (bukan innerHTML) agar aman dari HTML injection.
+        // Medali dipisah dari nama: medali tetap jadi ikon pixel, sedangkan nama (.lb-name) tidak diubah oleh pixel-icons.js.
         const nameSpan = document.createElement('span');
         const medal = ['🥇', '🥈', '🥉'][idx];
-        nameSpan.textContent = `${medal || (idx + 1) + '.'} ${entry.name}${isPlayer ? ' (Kamu)' : ''}`;
+        const nameText = document.createElement('span');
+        nameText.className = 'lb-name';
+        nameText.textContent = entry.name;
+        nameSpan.appendChild(document.createTextNode(`${medal || (idx + 1) + '.'} `));
+        nameSpan.appendChild(nameText);
+        if (isPlayer) nameSpan.appendChild(document.createTextNode(' (Kamu)'));
         const scoreSpan = document.createElement('span');
         scoreSpan.className = 'text-yellow-600 font-bold';
         scoreSpan.textContent = `🪙 ${entry.score}`;
