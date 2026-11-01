@@ -1,12 +1,4 @@
-/* js/reset-data.js — tombol "RESET SEMUA DATA" di layar Pengaturan.
-   Menghapus semua progres permainan di perangkat ini, tetapi akun login TETAP masuk.
-   Dimuat SETELAH game.js (lihat <script> di index.html). Isi game.js tidak diubah: skrip ini hanya mengganti
-   confirmResetData. Bila skrip ini gagal, tombol reset bawaan di game.js tetap jalan.
-   Yang dihapus  : semua kunci localStorage berawalan "pirate_" dan "pirate-edurace" (progres, item, pengaturan,
-                   antrean skor yang belum terkirim, catatan larangan multiplayer).
-   Yang dipertahankan: token login (pirate-edurace-acct), penanda klaim skor lama (pirate-edurace-lbclaim-*),
-                   dan pengenal papan global (pirate_pid; backend belum punya fitur hapus, jadi dihapus = entri ganda).
-   Tidak menyentuh data aplikasi lain di origin yang sama. */
+/* js/reset-data.js — tombol "RESET SEMUA DATA" di layar Pengaturan. */
 try {
 (function () {
     'use strict';
