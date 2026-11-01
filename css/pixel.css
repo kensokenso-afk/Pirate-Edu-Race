@@ -13,9 +13,12 @@
         #screen-main-menu h1 + p { text-shadow: 1px 1px 0 #2c1a0e, 0 0 4px rgba(44,26,14,.6); }
         /* ARENA BALAPAN pixel art (tampak atas). Kapal emoji lama disembunyikan tetapi tetap ada di DOM
            (posisi & animasinya dibaca oleh skrip arena), sehingga logika game tidak berubah. */
-        #race-track { background: #2b9fd2; animation: none; background-image: none; }
+        /* Penyembunyian kapal emoji & latar lama hanya berlaku bila kelas html.px-race ada. Kelas itu dipasang
+           pixel-race.js setelah canvas arena berhasil dibuat dan dicabut jika arena gagal/mati, sehingga kapal
+           emoji lama tampil kembali sebagai cadangan. */
         #race-canvas { position: absolute; left: 0; top: 0; image-rendering: pixelated; pointer-events: none; }
-        #ship-player, #ship-bot1, #ship-bot2, #ship-bot3 { visibility: hidden; }
+        html.px-race #race-track { background: #2b9fd2; animation: none; background-image: none; }
+        html.px-race #ship-player, html.px-race #ship-bot1, html.px-race #ship-bot2, html.px-race #ship-bot3 { visibility: hidden; }
         #race-track .rounded { z-index: 3; }
         /* AVATAR & ITEM PIXEL ART: sprite diskalakan bulat (avatar 20x24, ikon item 20x20) */
         .pxav { display: block; margin: 0 auto; width: var(--pxs, 20px); height: auto; aspect-ratio: 20 / 24; image-rendering: pixelated; }
