@@ -586,7 +586,10 @@ function renderLobbyList() {
         const row = document.createElement('div'); row.className = 'mp-room-row';
         const main = document.createElement('div'); main.className = 'mp-room-main';
         const nm = document.createElement('div'); nm.className = 'mp-room-name'; nm.textContent = rm.name;
-        const sb = document.createElement('div'); sb.className = 'mp-room-sub'; sb.textContent = 'Host: ' + rm.host + ' • ' + rm.code + ' • 👥 ' + rm.n + '/' + CFG.maxPlayers;
+        const sb = document.createElement('div'); sb.className = 'mp-room-sub';
+        const hn = document.createElement('span'); hn.className = 'mp-host-name'; hn.textContent = rm.host;   // nama host: tidak diubah jadi ikon
+        sb.appendChild(document.createTextNode('Host: ')); sb.appendChild(hn);
+        sb.appendChild(document.createTextNode(' • ' + rm.code + ' • 👥 ' + rm.n + '/' + CFG.maxPlayers));
         main.appendChild(nm); main.appendChild(sb);
         const badge = document.createElement('span');
         badge.className = 'mp-badge' + (joinable ? '' : ' busy');
@@ -1147,7 +1150,8 @@ function renderStrip() {
     ranking(R).forEach(function (x, i) {
         const c = document.createElement('div');
         c.className = 'mp-strip-cell' + (x.r === R.me ? ' me' : '');
-        c.textContent = (i + 1) + '. ' + x.r.name + ' ' + x.steps;
+        const cn = document.createElement('span'); cn.className = 'mp-strip-name'; cn.textContent = x.r.name;   // nama pemain: tidak diubah jadi ikon
+        c.appendChild(document.createTextNode((i + 1) + '. ')); c.appendChild(cn); c.appendChild(document.createTextNode(' ' + x.steps));
         el.appendChild(c);
     });
 }

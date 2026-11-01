@@ -420,7 +420,7 @@ try {
     var SKIP = ['#display-avatar', '#profile-avatar', '.mp-avatar', '#modal-avatar', '#shop-items-grid', '#collection-grid',
         '#sw-preview', '#race-track', '#scene-wrap', '#fx-toast', '#vic-coins', '#go-coins',
         // teks buatan pemain (nama, pesan) tidak diubah; avatar chat dikelola pixel-avatar.js
-        '.mp-chat-text', '.mp-chat-who', '.mp-seat-name', '.mp-room-name', '#mp-room-title', '#display-player-name', 'script', 'style'].join(',');
+        '.mp-chat-text', '.mp-chat-who', '.mp-seat-name', '.mp-room-name', '.lb-name', '.mp-res-name', '.mp-strip-name', '.mp-host-name', '#mp-room-title', '#display-player-name', 'script', 'style'].join(',');
     var urls = {};
 
     function toURL(key) {
