@@ -26,7 +26,7 @@
     'use strict';
 
     // Kunci publik penanda tangan token (JWK, bukan rahasia). Kalau kunci server diganti, ganti nilai ini.
-    var ACCT_PUB = { kty: 'EC', crv: 'P-256', x: 'WiSXpf8lvTDBWzsiLJwAfuToNhLR8JVNzePdreEv4g0', y: 'kkAvv42937TBUmP8ihI2R52dDYrpZ6GRyUPUVnR4cGY' };
+    var ACCT_PUB = { kty: 'EC', crv: 'P-256', x: 'LSE_5Wo6wHrZvGXyu12HzarJNl-7IT3ee-qGpAoRFMo', y: '_8sXh4J9zNKQL7JRa_y9ZfRv4k5-d5ZsLp7v_Cs2IQE' };
     var ACCT_LS = 'pirate-edurace-acct';          // token sesi
     var SQ_LS = 'pirate-edurace-scoreq';          // antrean skor milik akun
     var ID_RE = /^[a-z0-9]{8}$/;
