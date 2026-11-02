@@ -1280,19 +1280,18 @@ function syncSettingsUI() {
 }
 
 function confirmResetData() {
-    showConfirm("RESET DATA", "Apakah kamu yakin ingin mereset seluruh data permainan? Tindakan ini tidak bisa dibatalkan.", () => {
+    // Cadangan: dipakai hanya bila js/reset-data.js gagal dimuat (skrip itu menimpa fungsi ini). Aturannya HARUS sama:
+    // hapus semua kunci berawalan "pirate_" dan "pirate-edurace" (termasuk antrean skor & kickban), kecuali pengenal
+    // pemain (pirate_pid), token akun, dan penanda klaim skor lama, sehingga akun tetap masuk.
+    showConfirm("RESET DATA", "Apakah kamu yakin ingin mereset seluruh data permainan? Akunmu tetap masuk. Tindakan ini tidak bisa dibatalkan.", () => {
         // FIX #3: jangan pakai localStorage.clear() karena menghapus data app lain di origin yang sama.
-        // Hapus hanya key milik game ini (berawalan "pirate_").
         try {
+            const keep = k => k === 'pirate_pid' || k === 'pirate-edurace-acct' || k.startsWith('pirate-edurace-lbclaim-');
             const keysToRemove = [];
-            // PERBAIKAN bug #5: 'pirate_pid' = pengenal pemain di papan peringkat global. Bila dihapus, server menganggap kita pemain baru
-            // dan entri lama tertinggal sebagai duplikat (backend tidak punya fitur hapus), jadi key ini dipertahankan.
-            const KEEP = { 'pirate_pid': true };
             for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i);
-                if (k && k.startsWith('pirate_') && !KEEP[k]) keysToRemove.push(k);
+                if (k && (k.startsWith('pirate_') || k.startsWith('pirate-edurace')) && !keep(k)) keysToRemove.push(k);
             }
-            keysToRemove.push('pirate-edurace-kickban');   // data multiplayer: berawalan "pirate-" (bukan "pirate_") sehingga tadinya terlewat
             keysToRemove.forEach(k => localStorage.removeItem(k));
         } catch (e) { console.warn('Gagal mereset localStorage:', e); }
         location.reload();
