@@ -25,6 +25,11 @@ try {
        acc-2 Kompas Antik  : waktu soal habis -> +15 detik (1x per balapan)
        furn-1 Peti Harta   : +25 koin setiap balapan tuntas
        furn-2 Meriam Kapal : tameng 1x per balapan; jawaban salah pertama tidak mengurangi nyawa
+       pants-1 Celana Pelaut     : +3 XP tiap jawaban benar
+       pants-2 Celana Kargo      : +4 koin tiap jawaban benar di soal sulit
+       pants-3 Celana Layar      : +10 detik tiap soal sulit
+       pants-4 Celana Tahan Badai: nyawa <= 2 -> +8 XP tiap jawaban benar
+       pants-5 Celana Kapten Emas: balapan tuntas tanpa satu pun jawaban salah -> +40 koin (dibayar sesudah skor terkirim)
      SINGLE PLAYER DAN MULTIPLAYER (tiga baju baru; satu-satunya item non-kapal yang aktif di multiplayer)
        outfit-3 Baju Koki            : tiap 4 jawaban benar -> +3 koin, dibayar di akhir balapan tuntas
        outfit-4 Seragam Wakil Kapten : jawaban benar saat streak 3+ -> +4 XP
@@ -41,6 +46,11 @@ try {
     var XP_HARD = 10;                                       // Kacamata: tambahan XP di soal sulit
     var TIME_SOLO = { 'hat-1': 10, 'hat-2': 5 };            // detik tambahan per soal
     var COIN_SOLO = { 'shoes-1': 2, 'shoes-2': 1 };         // koin per jawaban benar
+    var PANTS_XP = 3;                                       // Celana Pelaut: XP per jawaban benar
+    var CARGO_COINS = 4;                                    // Celana Kargo: koin per jawaban benar di soal sulit
+    var SAIL_SEC = 10;                                      // Celana Layar: detik tambahan di soal sulit
+    var STORM_HP = 2, STORM_XP = 8;                         // Celana Tahan Badai: nyawa <= 2 -> XP tambahan
+    var GOLD_CLEAN = 40;                                    // Celana Kapten Emas: bonus tuntas tanpa salah
     var STREAK_EVERY = 3, STREAK_COINS = 8;                 // Monyet Nakal
     var COMPASS_SEC = 15;                                   // Kompas Antik
     var TIME_MULTI = { 'ship-4': 5 };                       // Kano Dayung
@@ -166,6 +176,7 @@ try {
                     } else {
                         var ts = TIME_SOLO[wornId('hat')];
                         if (ts) addTime(ts);
+                        if (worn('pants', 'pants-3') && matchQuestions[currentQuestionIdx].level === 'hard') addTime(SAIL_SEC);
                         if (worn('pet', 'pet-1') && matchQuestions[currentQuestionIdx].level === 'hard') strikeWrongOption();
                     }
                 }
@@ -236,7 +247,11 @@ try {
         }
         var xp = (XP_SOLO[wornId('outfit')] || 0);
         if (worn('accessories', 'acc-1') && matchQuestions[currentQuestionIdx].level === 'hard') xp += XP_HARD;
+        var pw = wornId('pants');
+        if (pw === 'pants-1') xp += PANTS_XP;
+        if (pw === 'pants-4' && GameState.hp <= STORM_HP) xp += STORM_XP;
         var coins = (COIN_SOLO[wornId('shoes')] || 0);
+        if (pw === 'pants-2' && matchQuestions[currentQuestionIdx].level === 'hard') coins += CARGO_COINS;
         if (worn('pet', 'pet-2') && (streakCount + 1) % STREAK_EVERY === 0) coins += STREAK_COINS;
         if (xp > 0) { GameState.xp += xp; soloXp += xp; notes.push('+' + xp + ' XP'); }
         if (coins > 0) {
@@ -291,6 +306,11 @@ try {
                         GameState.coins += CHEST_BONUS;
                         saveGameState();
                         appendText('vic-coins', ' (+' + CHEST_BONUS + ' Peti)');
+                    }
+                    if (wornId('pants') === 'pants-5' && currentMatchWrong === 0) {   // Celana Kapten Emas: dibayar sesudah skor terkirim
+                        GameState.coins += GOLD_CLEAN;
+                        saveGameState();
+                        appendText('vic-coins', ' (+' + GOLD_CLEAN + ' Celana)');
                     }
                     if (wornId('outfit') === 'outfit-3') {          // Baju Koki: dibayar sesudah skor terkirim di showVictory asli
                         var cb = cookBonus();
