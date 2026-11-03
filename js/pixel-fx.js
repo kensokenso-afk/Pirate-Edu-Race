@@ -4,6 +4,7 @@ try {
 /* EFEK ITEM STORWIN
    Aturan:
    - Kapal: efek HANYA berlaku di balapan MULTIPLAYER. Kapal Kayu (ship-1) adalah item awal, jadi tanpa efek.
+     PENGECUALIAN: ship-7, ship-8, ship-9 (kapal "dua mode") berlaku di SINGLE PLAYER dan MULTIPLAYER.
    - Item lain (baju, topi, sepatu, peliharaan, aksesori, furnitur): efek HANYA berlaku di SINGLE PLAYER.
    - Satu item per kategori dipakai pada satu waktu, jadi efek antar kategori boleh bertumpuk.
    - Bonus koin tidak masuk skor papan peringkat: di single player bonus menggeser matchStartCoins,
@@ -15,6 +16,11 @@ try {
        ship-4 Kano Dayung  : +5 detik waktu tiap soal
        ship-5 Speedboat    : jawaban benar dalam 10 detik pertama = +2 koin (dibayar di akhir, bila tuntas)
        ship-6 Kapal Feri   : tameng 1x; jawaban salah pertama tidak mengurangi nyawa
+     SINGLE PLAYER DAN MULTIPLAYER (tiga kapal "dua mode")
+       ship-7 Kapal Lumba-Lumba: sonar; di soal sedang & sulit, 1 pilihan salah dicoret otomatis
+       ship-8 Kapal Hiu        : +2 koin tiap jawaban benar (single: langsung, tidak masuk skor; multiplayer: dibayar di akhir bila tuntas)
+       ship-9 Kapal Gurita     : waktu soal habis -> +10 detik, maks. 2x per balapan
+     Ketiga kapal ini tidak menambah nyawa, tidak mengubah streak, dan tidak melewati soal (server membatasi salah <= 6).
      SINGLE PLAYER
        outfit-1 Baju Pelaut: +5 XP tiap jawaban benar          outfit-2 Jubah Kapten: +10 XP
        hat-1 Topi Bajak Laut: +10 detik tiap soal               hat-2 Bandana: +5 detik
@@ -57,9 +63,146 @@ try {
     var GOLD_COINS = 40;                                    // Kapal Emas
     var FAST_MS = 10000, FAST_COINS = 2;                    // Speedboat
     var GHOST_HEAL = 2;                                     // Kapal Hantu
+    var SHARK_COINS = 2;                                    // Kapal Hiu (single & multiplayer)
+    var INK_SEC = 10, INK_USES = 2;                         // Kapal Gurita (single & multiplayer)
     var COOK_EVERY = 4, COOK_COINS = 3;                     // Baju Koki: tiap 4 jawaban benar -> +3 koin di akhir
     var CMD_STREAK = 3, CMD_XP = 4;                         // Seragam Wakil Kapten: streak 3+ -> +4 XP per jawaban benar
     var NAV_MAX = 3;                                        // Baju Navigator: maks. soal sulit yang dibantu per balapan
+
+    // ---- KATALOG & TAMPILAN KAPAL "DUA MODE" (ship-7, ship-8, ship-9) ----
+    // Definisi tiga kapal ini sengaja disatukan di berkas ini (tanpa menyentuh game.js / pixel-avatar.js yang besar):
+    // item didaftarkan ke SHOP_ITEMS tepat sesudah ship-6, lalu kartu Storwin / Koleksi dan panel "Tampilanmu" diberi
+    // ikon pixel + teks efek. Pindahkan ke SHOP_ITEMS (game.js), FX_DESC dan ICONS (pixel-avatar.js) bila ingin seragam.
+    var SHIP_PAL = { o: '#2c1a0e', w: '#ffffff', b: '#2f78d6', k: '#1b1b26', a: '#e8742a', A: '#b4521a', g: '#8d94a3', G: '#5d6372',
+                     l: '#c6ecff', c: '#44d7e8', t: '#25a39a', T: '#167069', m: '#a56a34', M: '#6b4220', z: '#2a2f44' };
+    var NEW_SHIPS = [
+        { id: 'ship-7', name: 'Kapal Lumba-Lumba', price: 400, icon: '🐬',
+          desc: 'Efek: sonar, 1 pilihan salah dicoret di soal sedang & sulit (single & multiplayer)', art: [
+            '....................',
+            '.........cc.........',
+            '.........M.c........',
+            '.........Mlll.......',
+            '.........Mllll......',
+            '.........Mlllll.....',
+            '.........Mllllll....',
+            '.........Mlllllll...',
+            '.........Mcccccccb..',
+            '.........M..........',
+            '.........M..........',
+            '.........M..........',
+            '.........M..........',
+            '.........M..........',
+            '...MMMMMMMMMMMMMM...',
+            '...MttttttttttttM...',
+            '....MTTTTTTTTTTM....',
+            '.bbbbbbbbbbbbbbbbbb.',
+            '....................',
+            '....................'
+        ] },
+        { id: 'ship-8', name: 'Kapal Hiu', price: 650, icon: '🦈',
+          desc: 'Efek: +2 koin tiap jawaban benar (single & multiplayer)', art: [
+            '....................',
+            '.........G..........',
+            '.........GG.........',
+            '.........GGG........',
+            '.........GgGG.......',
+            '.........GggGG......',
+            '.........GgggGG.....',
+            '.........GgggggG....',
+            '.........GgggggggGG.',
+            '.........M..........',
+            '.........M..........',
+            '.........M..........',
+            '.........M..........',
+            '.........M..........',
+            '...zzzzzzzzzzzzzz...',
+            '...zGwGwGwGwGwGwz...',
+            '....zGGGGGGGGGGz....',
+            '.bbbbbbbbbbbbbbbbbb.',
+            '....................',
+            '....................'
+        ] },
+        { id: 'ship-9', name: 'Kapal Gurita', price: 500, icon: '🐙',
+          desc: 'Efek: waktu habis, +10 detik, maks. 2x per balapan (single & multiplayer)', art: [
+            '....................',
+            '....................',
+            '.......oooooo.......',
+            '......oaaaaaao......',
+            '.....oaaaaaaaao.....',
+            '....oaaaaaaaaaao....',
+            '....oawkaaaakwao....',
+            '....oaaaaaaaaaao....',
+            '....oAAAAAAAAAAo....',
+            '....oa.a.MM.a.ao....',
+            '....a..a.MM.a..a....',
+            '....A..A.MM.A..A....',
+            '.........MM.........',
+            '.........MM.........',
+            '...MMMMMMMMMMMMMM...',
+            '...MmmmkmmkmmkmmM...',
+            '....MmmmmmmmmmmM....',
+            '.bbbbbbbbbbbbbbbbbb.',
+            '....................',
+            '....................'
+        ] }
+    ];
+    try {
+        var shipAt = -1;
+        for (var si = 0; si < SHOP_ITEMS.length; si++) if (SHOP_ITEMS[si].id === 'ship-6') shipAt = si;
+        NEW_SHIPS.slice().reverse().forEach(function (n) {
+            if (SHOP_ITEMS.some(function (x) { return x.id === n.id; })) return;
+            SHOP_ITEMS.splice(shipAt >= 0 ? shipAt + 1 : SHOP_ITEMS.length, 0, { id: n.id, name: n.name, category: 'ship', price: n.price, icon: n.icon });
+        });
+    } catch (e) { }
+    var shipUrls = {};
+    function shipUrl(n) {
+        if (shipUrls[n.id]) return shipUrls[n.id];
+        var cv = document.createElement('canvas'); cv.width = 20; cv.height = 20;
+        var cx = cv.getContext('2d');
+        for (var y = 0; y < n.art.length; y++) for (var x = 0; x < 20; x++) {
+            var col = SHIP_PAL[n.art[y].charAt(x)];
+            if (col) { cx.fillStyle = col; cx.fillRect(x, y, 1, 1); }
+        }
+        return (shipUrls[n.id] = cv.toDataURL('image/png'));
+    }
+    function newShipBy(key, val) {
+        for (var i = 0; i < NEW_SHIPS.length; i++) if (NEW_SHIPS[i][key] === val) return NEW_SHIPS[i];
+        return null;
+    }
+    function decorateShips() {
+        try {
+            var cells = document.querySelectorAll('#shop-items-grid .text-2xl, #collection-grid .text-2xl');
+            Array.prototype.forEach.call(cells, function (el) {
+                if (el.querySelector('img')) return;
+                var n = newShipBy('icon', el.textContent.trim());
+                if (!n) return;
+                el.textContent = '';
+                var img = document.createElement('img');
+                img.className = 'pxit'; img.src = shipUrl(n); img.alt = n.icon; img.title = n.name;
+                img.width = 20; img.height = 20; img.draggable = false;
+                el.appendChild(img);
+                if (el.parentElement && !el.parentElement.querySelector('.fx-desc')) {
+                    var d = document.createElement('span'); d.className = 'fx-desc'; d.textContent = n.desc;
+                    var nameEl = el.nextElementSibling;
+                    if (nameEl) nameEl.insertAdjacentElement('afterend', d); else el.insertAdjacentElement('afterend', d);
+                }
+            });
+            // panel "Tampilanmu": pixel-avatar.js memakai ikon Kapal Kayu bila kapal terpasang tidak punya sprite di berkasnya
+            var eqShip = (GameState.equipped || {}).ship, pn = newShipBy('id', eqShip), pim = document.querySelector('#sw-pship img');
+            if (pn && pim && pim.getAttribute('data-px-ship') !== pn.id) { pim.src = shipUrl(pn); pim.setAttribute('data-px-ship', pn.id); }
+        } catch (e) { }
+    }
+    var decoTimer = 0;
+    function scheduleDecorate(records) {
+        try {
+            if (records && !records.some(function (r) {
+                return r.target && r.target.closest && r.target.closest('#shop-items-grid, #collection-grid, #sw-preview, #screen-storwin, #screen-collection');
+            })) return;
+        } catch (e) { }
+        if (decoTimer) return;
+        decoTimer = setTimeout(function () { decoTimer = 0; decorateShips(); }, 0);
+    }
+    try { new MutationObserver(scheduleDecorate).observe(document.body, { childList: true, subtree: true }); scheduleDecorate(); } catch (e) { }
 
     // ---- bantuan ----
     function worn(cat, id) {
@@ -93,6 +236,8 @@ try {
     var revive = true;          // Kapal Hantu (multiplayer)
     var compass = true;         // Kompas Antik (single)
     var fastCount = 0;          // jumlah jawaban benar cepat (Speedboat, multiplayer)
+    var sharkCount = 0;         // jumlah jawaban benar saat Kapal Hiu dipakai (multiplayer: dibayar di akhir)
+    var inkLeft = INK_USES;     // sisa tambahan waktu Kapal Gurita
     var qStart = 0;             // waktu soal ditampilkan (ms)
     var soloXp = 0, soloCoins = 0;  // total bonus single player pada balapan ini (untuk ditampilkan di layar akhir)
     var cookCorrect = 0;            // Baju Koki: jumlah jawaban benar pada balapan ini (single & multiplayer)
@@ -152,7 +297,7 @@ try {
     if (typeof origLaunch === 'function') {
         window.launchRaceGame = function () {
             shield = true; shipShield = true; revive = true; compass = true;
-            fastCount = 0; soloXp = 0; soloCoins = 0; cookCorrect = 0; cmdXp = 0; navUsed = 0; navKey = '';
+            fastCount = 0; sharkCount = 0; inkLeft = INK_USES; soloXp = 0; soloCoins = 0; cookCorrect = 0; cmdXp = 0; navUsed = 0; navKey = '';
             try { var old = document.getElementById('fx-mp-bonus'); if (old) old.remove(); } catch (e) { }   // baris bonus balapan sebelumnya
             try { var old2 = document.getElementById('fx-mp-outfit'); if (old2) old2.remove(); } catch (e) { }
             return origLaunch.apply(this, arguments);
@@ -192,12 +337,18 @@ try {
                         }
                     }
                 }
+                // Kapal Lumba-Lumba (sonar; single & multiplayer): soal sedang & sulit -> 1 pilihan salah dicoret.
+                // Tombol dibuat ulang tiap soal dimuat, jadi tidak perlu jatah; selalu menyisakan minimal satu pilihan salah.
+                if (wornId('ship') === 'ship-7' && raceLive()) {
+                    var sl = matchQuestions[currentQuestionIdx].level;
+                    if (sl === 'medium' || sl === 'hard') strikeActiveWrong();
+                }
             } catch (e) { }
             return out;
         };
     }
 
-    // ---- Kompas Antik: waktu habis -> tambahan waktu sekali per balapan (single) ----
+    // ---- Kompas Antik (single) & Kapal Gurita (single + multiplayer): waktu habis -> tambahan waktu ----
     var origTimeout = window.handleQuestionTimeout;
     if (typeof origTimeout === 'function') {
         window.handleQuestionTimeout = function () {
@@ -206,6 +357,12 @@ try {
                     compass = false;
                     startQuestionTimer(COMPASS_SEC * 1000);
                     toast('Kompas menunjukkan arah! +' + COMPASS_SEC + ' detik');
+                    return;
+                }
+                if (inkLeft > 0 && wornId('ship') === 'ship-9' && raceLive() && !isAnsweringLocked) {
+                    inkLeft--;
+                    startQuestionTimer(INK_SEC * 1000);
+                    toast('Tinta Gurita! +' + INK_SEC + ' detik (sisa ' + inkLeft + 'x)');
                     return;
                 }
             } catch (e) { }
@@ -233,6 +390,9 @@ try {
             } else if (ship === 'ship-5' && Date.now() - qStart <= FAST_MS) {
                 fastCount++;
                 notes.push('Speedboat ngebut! +' + FAST_COINS + ' koin di akhir');
+            } else if (ship === 'ship-8') {
+                sharkCount++;                               // dibayar di akhir (mp:final) supaya tidak masuk skor papan peringkat
+                notes.push('Hiu lapar! +' + SHARK_COINS + ' koin di akhir');
             }
             return notes;
         }
@@ -253,6 +413,7 @@ try {
         var coins = (COIN_SOLO[wornId('shoes')] || 0);
         if (pw === 'pants-2' && matchQuestions[currentQuestionIdx].level === 'hard') coins += CARGO_COINS;
         if (worn('pet', 'pet-2') && (streakCount + 1) % STREAK_EVERY === 0) coins += STREAK_COINS;
+        if (wornId('ship') === 'ship-8') coins += SHARK_COINS;   // Kapal Hiu (kapal dua mode)
         if (xp > 0) { GameState.xp += xp; soloXp += xp; notes.push('+' + xp + ' XP'); }
         if (coins > 0) {
             GameState.coins += coins; soloCoins += coins;
@@ -346,10 +507,12 @@ try {
         try {
             var d = (ev && ev.detail) || {};
             var fast = fastCount; fastCount = 0;
+            var shark = sharkCount; sharkCount = 0;
             if (d.why !== 'complete') return;               // keluar / nyawa habis: tanpa bonus kapal
             var ship = wornId('ship'), bonus = 0, label = '';
             if (ship === 'ship-2') { bonus = GOLD_COINS; label = 'Kapal Emas'; }
             else if (ship === 'ship-5' && fast > 0) { bonus = fast * FAST_COINS; label = 'Speedboat'; }
+            else if (ship === 'ship-8' && shark > 0) { bonus = shark * SHARK_COINS; label = 'Kapal Hiu'; }
             if (bonus <= 0) return;
             GameState.coins += bonus;
             saveGameState();
