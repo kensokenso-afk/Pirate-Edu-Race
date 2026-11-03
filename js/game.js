@@ -54,6 +54,11 @@ const SHOP_ITEMS = [
     { id: 'outfit-3',name: 'Baju Koki',      category: 'outfit',      price: 220, icon: '🍳' },
     { id: 'outfit-4',name: 'Seragam Wakil Kapten', category: 'outfit', price: 300, icon: '🎖️' },
     { id: 'outfit-5',name: 'Baju Navigator', category: 'outfit',      price: 260, icon: '🗺️' },
+    { id: 'pants-1',name: 'Celana Pelaut',  category: 'pants',       price: 90,  icon: '🩳' },
+    { id: 'pants-2',name: 'Celana Kargo',   category: 'pants',       price: 160, icon: '👖' },
+    { id: 'pants-3',name: 'Celana Layar',   category: 'pants',       price: 200, icon: '🏳️' },
+    { id: 'pants-4',name: 'Celana Tahan Badai', category: 'pants',   price: 280, icon: '🌊' },
+    { id: 'pants-5',name: 'Celana Kapten Emas', category: 'pants',   price: 450, icon: '👑' },
     { id: 'hat-1',   name: 'Topi Bajak Laut', category: 'hat',         price: 200, icon: '🎩' },
     { id: 'hat-2',   name: 'Bandana',        category: 'hat',         price: 80,  icon: '🧢' },
     { id: 'shoes-1', name: 'Sepatu Boots',   category: 'shoes',       price: 120, icon: '👢' },
@@ -503,7 +508,7 @@ function escapeHtml(t) {
 }
 
 function renderAvatarHTML() {
-    const cats = ['hat', 'accessories', 'outfit', 'shoes', 'pet'];
+    const cats = ['hat', 'accessories', 'outfit', 'pants', 'shoes', 'pet'];
     const icons = cats.map(c => {
         const it = SHOP_ITEMS.find(s => s.id === GameState.equipped[c]);
         return it ? it.icon : '';
