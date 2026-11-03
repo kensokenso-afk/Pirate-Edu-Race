@@ -70,6 +70,7 @@ Nilai emoji dipakai sebagai data (disimpan dan dikirim lewat multiplayer). Skrip
 - Single player: 3 bot acak (70%/65%/60%). Multiplayer: bot ditentukan seed yang sama di semua perangkat.
 - Efek item: logika di `pixel-fx.js`, teks di `FX_DESC` (`pixel-avatar.js`). Ubah keduanya bersamaan.
 - Tiga baju baru (`outfit-3` Baju Koki, `outfit-4` Seragam Wakil Kapten, `outfit-5` Baju Navigator) adalah satu-satunya item non-kapal yang efeknya aktif di single DAN multiplayer. Efeknya tidak menyentuh nyawa, waktu soal, streak, atau jumlah benar (server membatasi salah ≤ 6). Koin Baju Koki dibayar sesudah skor terkirim; XP tidak masuk skor.
+- Kategori `pants` (Celana, `pants-1`..`pants-5`): efek hanya single player, logika di `pixel-fx.js` (cabang single `beforeAnswer`, `loadNextQuestion`, `showVictory`). Tidak menyentuh nyawa, streak, atau jumlah benar; bonus koin Celana Kapten Emas dibayar sesudah skor terkirim. Layer sprite celana digambar di baris 19–21 avatar (urutan `ORDER` di `pixel-avatar.js`: baju → celana → sepatu).
 - Suara: musik dijeda saat game di background; efek suara tidak diputar di background; `bgmFailed` menghentikan percobaan ulang bila mp3 gagal dimuat; suara klik tidak dibunyikan saat tujuan `screen-victory`/`screen-gameover` atau layar tujuan sudah aktif.
 
 ## 5. Multiplayer
