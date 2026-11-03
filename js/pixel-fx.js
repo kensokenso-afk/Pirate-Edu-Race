@@ -25,6 +25,12 @@ try {
        acc-2 Kompas Antik  : waktu soal habis -> +15 detik (1x per balapan)
        furn-1 Peti Harta   : +25 koin setiap balapan tuntas
        furn-2 Meriam Kapal : tameng 1x per balapan; jawaban salah pertama tidak mengurangi nyawa
+     SINGLE PLAYER DAN MULTIPLAYER (tiga baju baru; satu-satunya item non-kapal yang aktif di multiplayer)
+       outfit-3 Baju Koki            : tiap 4 jawaban benar -> +3 koin, dibayar di akhir balapan tuntas
+       outfit-4 Seragam Wakil Kapten : jawaban benar saat streak 3+ -> +4 XP
+       outfit-5 Baju Navigator       : soal sulit -> 1 pilihan salah dicoret (maks. 3x per balapan)
+     Ketiganya tidak mengubah nyawa, waktu soal, streak, atau jumlah benar (server membatasi salah <= 6), dan koinnya
+     dibayar SESUDAH skor terkirim, jadi tidak ikut skor papan peringkat. XP memang tidak masuk skor.
    Fungsi game dibungkus (pola yang sama dengan modul multiplayer); logika asli tidak diubah. */
 (function () {
     'use strict';
@@ -41,6 +47,9 @@ try {
     var GOLD_COINS = 40;                                    // Kapal Emas
     var FAST_MS = 10000, FAST_COINS = 2;                    // Speedboat
     var GHOST_HEAL = 2;                                     // Kapal Hantu
+    var COOK_EVERY = 4, COOK_COINS = 3;                     // Baju Koki: tiap 4 jawaban benar -> +3 koin di akhir
+    var CMD_STREAK = 3, CMD_XP = 4;                         // Seragam Wakil Kapten: streak 3+ -> +4 XP per jawaban benar
+    var NAV_MAX = 3;                                        // Baju Navigator: maks. soal sulit yang dibantu per balapan
 
     // ---- bantuan ----
     function worn(cat, id) {
@@ -76,10 +85,27 @@ try {
     var fastCount = 0;          // jumlah jawaban benar cepat (Speedboat, multiplayer)
     var qStart = 0;             // waktu soal ditampilkan (ms)
     var soloXp = 0, soloCoins = 0;  // total bonus single player pada balapan ini (untuk ditampilkan di layar akhir)
+    var cookCorrect = 0;            // Baju Koki: jumlah jawaban benar pada balapan ini (single & multiplayer)
+    var cmdXp = 0;                  // Seragam Wakil Kapten: total XP bonus pada balapan ini
+    var navUsed = 0, navKey = '';   // Baju Navigator: soal yang sudah dibantu, penanda soal terakhir
 
     function answerable() {
         try { return !matchEnded && !!matchQuestions[currentQuestionIdx]; } catch (e) { return false; }
     }
+
+    // Khusus tiga baju baru (berlaku di single DAN multiplayer): true bila ada soal yang benar-benar sedang dikerjakan.
+    // Di multiplayer, beginRace() memanggil launchRaceGame() (memuat soal acak sementara) sebelum memasang urutan soal host,
+    // jadi soal baru dianggap sah hanya bila id-nya sama dengan urutan host.
+    function raceLive() {
+        try {
+            if (!answerable()) return false;
+            var R = mpRace();
+            if (!R) return true;
+            if (!(R.started && R.active && !R.myDone && !R.screenDone)) return false;
+            return !!R.order && R.order[currentQuestionIdx] === matchQuestions[currentQuestionIdx].id;
+        } catch (e) { return false; }
+    }
+    function cookBonus() { return Math.floor(cookCorrect / COOK_EVERY) * COOK_COINS; }
 
     // tambah waktu pada soal yang sedang berjalan (juga saat timer dijeda oleh popup)
     function addTime(sec) {
@@ -101,13 +127,24 @@ try {
         b.disabled = true; b.style.opacity = '.4'; b.style.textDecoration = 'line-through';
     }
 
+    // Baju Navigator: coret satu pilihan salah yang masih aktif; selalu sisakan minimal satu pilihan salah
+    function strikeActiveWrong() {
+        var btns = Array.prototype.slice.call(document.querySelectorAll('#quiz-options-container button[data-correct="0"]'))
+            .filter(function (b) { return !b.disabled; });
+        if (btns.length < 2) return false;
+        var b = btns[Math.floor(Math.random() * btns.length)];
+        b.disabled = true; b.style.opacity = '.4'; b.style.textDecoration = 'line-through';
+        return true;
+    }
+
     // ---- reset saat balapan dimulai ----
     var origLaunch = window.launchRaceGame;
     if (typeof origLaunch === 'function') {
         window.launchRaceGame = function () {
             shield = true; shipShield = true; revive = true; compass = true;
-            fastCount = 0; soloXp = 0; soloCoins = 0;
+            fastCount = 0; soloXp = 0; soloCoins = 0; cookCorrect = 0; cmdXp = 0; navUsed = 0; navKey = '';
             try { var old = document.getElementById('fx-mp-bonus'); if (old) old.remove(); } catch (e) { }   // baris bonus balapan sebelumnya
+            try { var old2 = document.getElementById('fx-mp-outfit'); if (old2) old2.remove(); } catch (e) { }
             return origLaunch.apply(this, arguments);
         };
     }
@@ -130,6 +167,18 @@ try {
                         var ts = TIME_SOLO[wornId('hat')];
                         if (ts) addTime(ts);
                         if (worn('pet', 'pet-1') && matchQuestions[currentQuestionIdx].level === 'hard') strikeWrongOption();
+                    }
+                }
+                // Baju Navigator (single & multiplayer). Soal yang sama bisa dimuat dua kali (mis. awal multiplayer):
+                // pada pemuatan ulang, coretan dipasang lagi tanpa menghitung jatah baru.
+                if (raceLive() && wornId('outfit') === 'outfit-5') {
+                    var nq = matchQuestions[currentQuestionIdx], nk = currentQuestionIdx + ':' + nq.id;
+                    if (nq.level === 'hard') {
+                        if (navKey === nk) strikeActiveWrong();
+                        else if (navUsed < NAV_MAX && strikeActiveWrong()) {
+                            navUsed++; navKey = nk;
+                            toast('Baju Navigator mencoret 1 pilihan salah (' + navUsed + '/' + NAV_MAX + ')');
+                        }
                     }
                 }
             } catch (e) { }
@@ -198,11 +247,27 @@ try {
         return notes;
     }
 
+    // Baju Koki & Seragam Wakil Kapten (single & multiplayer). Dihitung sebelum logika asli, jadi streakCount masih nilai SEBELUM jawaban ini.
+    function outfitAnswer(ok) {
+        var notes = [];
+        if (!ok || !raceLive()) return notes;
+        var o = wornId('outfit');
+        if (o === 'outfit-3') {
+            cookCorrect++;
+            if (cookCorrect % COOK_EVERY === 0) notes.push('Bekal Koki siap! +' + COOK_COINS + ' koin di akhir');
+        } else if (o === 'outfit-4' && (streakCount + 1) >= CMD_STREAK) {
+            GameState.xp += CMD_XP; cmdXp += CMD_XP;
+            notes.push('Komando! +' + CMD_XP + ' XP');
+        }
+        return notes;
+    }
+
     var origAnswer = window.handleAnswer;
     if (typeof origAnswer === 'function') {
         window.handleAnswer = function (isCorrect) {
             var notes = [];
             try { notes = beforeAnswer(!!isCorrect); } catch (e) { }
+            try { notes = notes.concat(outfitAnswer(!!isCorrect)); } catch (e) { }
             var out = origAnswer.apply(this, arguments);
             try { if (notes.length) toast(notes.join(' • ')); } catch (e) { }
             return out;
@@ -227,8 +292,17 @@ try {
                         saveGameState();
                         appendText('vic-coins', ' (+' + CHEST_BONUS + ' Peti)');
                     }
+                    if (wornId('outfit') === 'outfit-3') {          // Baju Koki: dibayar sesudah skor terkirim di showVictory asli
+                        var cb = cookBonus();
+                        if (cb > 0) {
+                            GameState.coins += cb;
+                            saveGameState();
+                            appendText('vic-coins', ' (+' + cb + ' Koki)');
+                        }
+                    }
                     if (soloCoins > 0) appendText('vic-coins', ' (+' + soloCoins + ' item)');
                     if (soloXp > 0) appendText('vic-xp', ' (+' + soloXp + ' item)');
+                    if (cmdXp > 0) appendText('vic-xp', ' (+' + cmdXp + ' Komando)');
                 }
             } catch (e) { }
             return out;
@@ -268,6 +342,31 @@ try {
                 }
                 line.textContent = 'Bonus ' + label + ': +' + bonus + ' koin';
             }
+        } catch (e) { }
+    });
+
+    // ---- akhir balapan MULTIPLAYER: Seragam Wakil Kapten & Baju Koki (listener terpisah; berjalan sesudah listener kapal di atas) ----
+    window.addEventListener('mp:final', function (ev) {
+        try {
+            var d = (ev && ev.detail) || {};
+            var xp = cmdXp; cmdXp = 0;
+            var lines = [];
+            if (xp > 0) lines.push('Komando Wakil Kapten: +' + xp + ' XP');
+            if (d.why === 'complete' && wornId('outfit') === 'outfit-3') {   // keluar / nyawa habis: tanpa bonus koin
+                var b = cookBonus();
+                if (b > 0) {
+                    GameState.coins += b;
+                    saveGameState();
+                    lines.push('Bekal Koki: +' + b + ' koin');
+                }
+            }
+            if (!lines.length) return;
+            var rw = document.getElementById('mp-res-reward');
+            if (!rw) return;
+            var old = document.getElementById('fx-mp-outfit'); if (old) old.remove();
+            var line = document.createElement('div'); line.id = 'fx-mp-outfit'; line.className = 'mp-reward';
+            line.textContent = lines.join(' • ');
+            (document.getElementById('fx-mp-bonus') || rw).insertAdjacentElement('afterend', line);
         } catch (e) { }
     });
 })();

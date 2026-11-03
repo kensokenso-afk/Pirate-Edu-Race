@@ -69,6 +69,7 @@ Nilai emoji dipakai sebagai data (disimpan dan dikirim lewat multiplayer). Skrip
 - Skor papan peringkat = koin yang didapat dalam satu balapan. Skor maksimum 530. Bonus item dibayar di luar skor.
 - Single player: 3 bot acak (70%/65%/60%). Multiplayer: bot ditentukan seed yang sama di semua perangkat.
 - Efek item: logika di `pixel-fx.js`, teks di `FX_DESC` (`pixel-avatar.js`). Ubah keduanya bersamaan.
+- Tiga baju baru (`outfit-3` Baju Koki, `outfit-4` Seragam Wakil Kapten, `outfit-5` Baju Navigator) adalah satu-satunya item non-kapal yang efeknya aktif di single DAN multiplayer. Efeknya tidak menyentuh nyawa, waktu soal, streak, atau jumlah benar (server membatasi salah ≤ 6). Koin Baju Koki dibayar sesudah skor terkirim; XP tidak masuk skor.
 - Suara: musik dijeda saat game di background; efek suara tidak diputar di background; `bgmFailed` menghentikan percobaan ulang bila mp3 gagal dimuat; suara klik tidak dibunyikan saat tujuan `screen-victory`/`screen-gameover` atau layar tujuan sudah aktif.
 
 ## 5. Multiplayer

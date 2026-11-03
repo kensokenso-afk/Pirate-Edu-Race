@@ -14,7 +14,7 @@ Upgrade dilakukan sebagai **lapisan tambahan**. Logika game (`js/game.js`, `js/m
 | `js/pixel-scene.js` | Claude | latar laut pixel animasi di semua layar (kanvas `#scene-canvas`) |
 | `js/pixel-race.js` | Claude | arena balapan tampak atas (kanvas `#race-canvas`) |
 | `js/pixel-avatar.js` | Claude | avatar, ikon item Storwin dan Koleksi, panel "Tampilanmu" |
-| `js/pixel-fx.js` | Claude | efek semua item Storwin: kapal (multiplayer), item lain (single player); Kapal Kayu tanpa efek |
+| `js/pixel-fx.js` | Claude | efek semua item Storwin: kapal (multiplayer), item lain (single player), kecuali tiga baju baru (single dan multiplayer); Kapal Kayu tanpa efek |
 | `js/game.js` | Claude (hanya tiga kapal baru di `SHOP_ITEMS` dan soal `FQH-06`) | selebihnya tidak disentuh |
 | `css/pixel-icons.css` | Claude (dikerjakan di PR #6; Copilot tidak sempat mengambilnya) | gaya ikon pixel kecil |
 | `js/pixel-icons.js` | Claude (PR #6, diperluas di PR UI/UX) | emoji dekorasi, tombol, dan judul menjadi sprite pixel; ikon juga dibuka sebagai variabel CSS `--pxi-*` |
