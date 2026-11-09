@@ -6,6 +6,8 @@ try {
    - Kapal: efek HANYA berlaku di balapan MULTIPLAYER. Kapal Kayu (ship-1) adalah item awal, jadi tanpa efek.
      PENGECUALIAN: ship-7, ship-8, ship-9 (kapal "dua mode") berlaku di SINGLE PLAYER dan MULTIPLAYER.
    - Item lain (baju, topi, sepatu, peliharaan, aksesori, furnitur): efek HANYA berlaku di SINGLE PLAYER.
+     PENGECUALIAN: tiga baju baru (outfit-3/4/5) dan Topi Navigator (hat-5) berlaku di SINGLE dan MULTIPLAYER;
+     Topi Koki (hat-3) dan Topi Wakil Kapten (hat-4) berlaku HANYA di MULTIPLAYER.
    - Satu item per kategori dipakai pada satu waktu, jadi efek antar kategori boleh bertumpuk.
    - Bonus koin tidak masuk skor papan peringkat: di single player bonus menggeser matchStartCoins,
      di multiplayer bonus dibayar sesudah hadiah peringkat dan skor sudah terkirim.
@@ -16,6 +18,8 @@ try {
        ship-4 Kano Dayung  : +5 detik waktu tiap soal
        ship-5 Speedboat    : jawaban benar dalam 10 detik pertama = +2 koin (dibayar di akhir, bila tuntas)
        ship-6 Kapal Feri   : tameng 1x; jawaban salah pertama tidak mengurangi nyawa
+       hat-3 Topi Koki         : +3 XP tiap jawaban benar
+       hat-4 Topi Wakil Kapten : finis peringkat 1-2 -> +40 koin (dibayar di akhir, bila balapan tuntas)
      SINGLE PLAYER DAN MULTIPLAYER (tiga kapal "dua mode")
        ship-7 Kapal Lumba-Lumba: sonar; di soal sedang & sulit, 1 pilihan salah dicoret otomatis
        ship-8 Kapal Hiu        : +2 koin tiap jawaban benar (single: langsung, tidak masuk skor; multiplayer: dibayar di akhir bila tuntas)
@@ -36,12 +40,16 @@ try {
        pants-3 Celana Layar      : +10 detik tiap soal sulit
        pants-4 Celana Tahan Badai: nyawa <= 2 -> +8 XP tiap jawaban benar
        pants-5 Celana Kapten Emas: balapan tuntas tanpa satu pun jawaban salah -> +40 koin (dibayar sesudah skor terkirim)
-     SINGLE PLAYER DAN MULTIPLAYER (tiga baju baru; satu-satunya item non-kapal yang aktif di multiplayer)
+     SINGLE PLAYER DAN MULTIPLAYER (tiga baju baru + Topi Navigator; satu-satunya item non-kapal yang aktif di multiplayer,
+     selain Topi Koki & Topi Wakil Kapten di atas)
        outfit-3 Baju Koki            : tiap 4 jawaban benar -> +3 koin, dibayar di akhir balapan tuntas
        outfit-4 Seragam Wakil Kapten : jawaban benar saat streak 3+ -> +4 XP
        outfit-5 Baju Navigator       : soal sulit -> 1 pilihan salah dicoret (maks. 3x per balapan)
-     Ketiganya tidak mengubah nyawa, waktu soal, streak, atau jumlah benar (server membatasi salah <= 6), dan koinnya
-     dibayar SESUDAH skor terkirim, jadi tidak ikut skor papan peringkat. XP memang tidak masuk skor.
+       hat-5 Topi Navigator          : +3 koin tiap jawaban benar di soal sulit (single: langsung, tidak masuk skor;
+                                       multiplayer: dibayar di akhir bila tuntas)
+     Keempatnya (dan hat-3, hat-4) tidak mengubah nyawa, waktu soal, streak, atau jumlah benar (server membatasi salah <= 6).
+     Koinnya tidak ikut skor papan peringkat: dibayar SESUDAH skor terkirim (atau menggeser matchStartCoins di single).
+     XP memang tidak masuk skor.
    Fungsi game dibungkus (pola yang sama dengan modul multiplayer); logika asli tidak diubah. */
 (function () {
     'use strict';
@@ -68,6 +76,9 @@ try {
     var COOK_EVERY = 4, COOK_COINS = 3;                     // Baju Koki: tiap 4 jawaban benar -> +3 koin di akhir
     var CMD_STREAK = 3, CMD_XP = 4;                         // Seragam Wakil Kapten: streak 3+ -> +4 XP per jawaban benar
     var NAV_MAX = 3;                                        // Baju Navigator: maks. soal sulit yang dibantu per balapan
+    var HAT_XP = 3;                                         // Topi Koki (multiplayer): XP per jawaban benar
+    var HAT_RANK_COINS = 40;                                // Topi Wakil Kapten (multiplayer): bonus koin bila finis peringkat 1-2
+    var HAT_HARD_COINS = 3;                                 // Topi Navigator (single & multiplayer): koin per jawaban benar di soal sulit
 
     // ---- KATALOG & TAMPILAN KAPAL "DUA MODE" (ship-7, ship-8, ship-9) ----
     // Definisi tiga kapal ini sengaja disatukan di berkas ini (tanpa menyentuh game.js / pixel-avatar.js yang besar):
@@ -243,6 +254,8 @@ try {
     var cookCorrect = 0;            // Baju Koki: jumlah jawaban benar pada balapan ini (single & multiplayer)
     var cmdXp = 0;                  // Seragam Wakil Kapten: total XP bonus pada balapan ini
     var navUsed = 0, navKey = '';   // Baju Navigator: soal yang sudah dibantu, penanda soal terakhir
+    var hatXp = 0;                  // Topi Koki: total XP bonus pada balapan multiplayer ini
+    var hatHard = 0;                // Topi Navigator (multiplayer): jawaban benar di soal sulit, dibayar di akhir
 
     function answerable() {
         try { return !matchEnded && !!matchQuestions[currentQuestionIdx]; } catch (e) { return false; }
@@ -298,8 +311,10 @@ try {
         window.launchRaceGame = function () {
             shield = true; shipShield = true; revive = true; compass = true;
             fastCount = 0; sharkCount = 0; inkLeft = INK_USES; soloXp = 0; soloCoins = 0; cookCorrect = 0; cmdXp = 0; navUsed = 0; navKey = '';
+            hatXp = 0; hatHard = 0;
             try { var old = document.getElementById('fx-mp-bonus'); if (old) old.remove(); } catch (e) { }   // baris bonus balapan sebelumnya
             try { var old2 = document.getElementById('fx-mp-outfit'); if (old2) old2.remove(); } catch (e) { }
+            try { var old3 = document.getElementById('fx-mp-hat'); if (old3) old3.remove(); } catch (e) { }
             return origLaunch.apply(this, arguments);
         };
     }
@@ -438,12 +453,38 @@ try {
         return notes;
     }
 
+    // Tiga topi baru. Dihitung sebelum logika asli (seperti outfitAnswer); raceLive() menjamin ada soal yang benar-benar dikerjakan.
+    //   hat-3 Topi Koki      : HANYA multiplayer, +3 XP tiap jawaban benar (XP tidak masuk skor).
+    //   hat-5 Topi Navigator : single & multiplayer, +3 koin tiap jawaban benar di soal sulit.
+    //                          Single: langsung + menggeser matchStartCoins (seperti Kapal Hiu). Multiplayer: dibayar di mp:final.
+    //   hat-4 Topi Wakil Kapten tidak butuh hitungan per jawaban: bonus peringkat dibayar di mp:final.
+    function hatAnswer(ok) {
+        var notes = [];
+        if (!ok || !raceLive()) return notes;
+        var h = wornId('hat'), R = mpRace();
+        if (h === 'hat-3' && R) {
+            GameState.xp += HAT_XP; hatXp += HAT_XP;
+            notes.push('Sup Bergizi! +' + HAT_XP + ' XP');
+        } else if (h === 'hat-5' && matchQuestions[currentQuestionIdx].level === 'hard') {
+            if (R) {
+                hatHard++;                                  // dibayar di akhir supaya tidak masuk skor papan peringkat
+                notes.push('Peta Bintang! +' + HAT_HARD_COINS + ' koin di akhir');
+            } else {
+                GameState.coins += HAT_HARD_COINS; soloCoins += HAT_HARD_COINS;
+                matchStartCoins += HAT_HARD_COINS;          // bonus tidak ikut dihitung sebagai skor papan peringkat
+                notes.push('Peta Bintang! +' + HAT_HARD_COINS + ' koin');
+            }
+        }
+        return notes;
+    }
+
     var origAnswer = window.handleAnswer;
     if (typeof origAnswer === 'function') {
         window.handleAnswer = function (isCorrect) {
             var notes = [];
             try { notes = beforeAnswer(!!isCorrect); } catch (e) { }
             try { notes = notes.concat(outfitAnswer(!!isCorrect)); } catch (e) { }
+            try { notes = notes.concat(hatAnswer(!!isCorrect)); } catch (e) { }
             var out = origAnswer.apply(this, arguments);
             try { if (notes.length) toast(notes.join(' • ')); } catch (e) { }
             return out;
@@ -550,6 +591,37 @@ try {
             var line = document.createElement('div'); line.id = 'fx-mp-outfit'; line.className = 'mp-reward';
             line.textContent = lines.join(' • ');
             (document.getElementById('fx-mp-bonus') || rw).insertAdjacentElement('afterend', line);
+        } catch (e) { }
+    });
+
+    // ---- akhir balapan MULTIPLAYER: tiga topi baru (listener terpisah; berjalan sesudah listener kapal & baju di atas) ----
+    // Bonus koin dibayar sesudah hadiah peringkat dan skor papan peringkat terkirim, jadi tidak ikut skor.
+    window.addEventListener('mp:final', function (ev) {
+        try {
+            var d = (ev && ev.detail) || {};
+            var xp = hatXp; hatXp = 0;
+            var hard = hatHard; hatHard = 0;
+            var lines = [];
+            if (xp > 0) lines.push('Sup Bergizi Topi Koki: +' + xp + ' XP');
+            if (d.why === 'complete') {                     // keluar / nyawa habis: tanpa bonus koin
+                var hat = wornId('hat'), coins = 0;
+                if (hat === 'hat-4' && d.rank >= 1 && d.rank <= 2) {
+                    coins += HAT_RANK_COINS;
+                    lines.push('Wibawa Wakil Kapten: +' + HAT_RANK_COINS + ' koin');
+                }
+                if (hat === 'hat-5' && hard > 0) {
+                    coins += hard * HAT_HARD_COINS;
+                    lines.push('Peta Bintang Navigator: +' + (hard * HAT_HARD_COINS) + ' koin');
+                }
+                if (coins > 0) { GameState.coins += coins; saveGameState(); }
+            }
+            if (!lines.length) return;
+            var rw = document.getElementById('mp-res-reward');
+            if (!rw) return;
+            var old = document.getElementById('fx-mp-hat'); if (old) old.remove();
+            var line = document.createElement('div'); line.id = 'fx-mp-hat'; line.className = 'mp-reward';
+            line.textContent = lines.join(' • ');
+            (document.getElementById('fx-mp-outfit') || document.getElementById('fx-mp-bonus') || rw).insertAdjacentElement('afterend', line);
         } catch (e) { }
     });
 })();
